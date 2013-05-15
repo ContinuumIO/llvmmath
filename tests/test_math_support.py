@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import
 
-from numba.support.math_support import math_support
+from numba.support.math_support import math_support, symbols
 
-library = math_support.use_openlibm()
+# library = symbols.get_symbols(math_support.openlibm)
+
+library = symbols.get_symbols(math_support.umath, math_support.umath_mangler)
 print(library)
