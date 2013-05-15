@@ -18,12 +18,27 @@ from numba.support.math_support import symbols
 import llvm.core
 import numpy.core.umath
 
-# openlibm = ctypes.CDLL(ctypes.util.find_library("openlibm"))
+# ______________________________________________________________________
+# openlibm
+
+symbol_data = open(os.path.join(os.path.dirname(__file__), "Symbol.map")).read()
+openlibm_symbols = set(word.rstrip(';') for word in symbol_data.split())
+openlibm = ctypes.CDLL(ctypes.util.find_library("openlibm"))
+openlibm_library = symbols.get_symbols(
+    openlibm, have_symbol=lambda libm, cname: cname in openlibm_symbols)
+
+# ______________________________________________________________________
+# NumPy umath
 
 umath = ctypes.CDLL(numpy.core.umath.__file__)
 umath_mangler = lambda name, ty: 'npy_' + symbols.unary_math_suffix(name, ty)
+umath_library = symbols.get_symbols(umath, umath_mangler)
 
-# libm = ctypes.CDLL(ctypes.util.find_library("m"))
+# ______________________________________________________________________
+# System's libmath
+
+libm = ctypes.CDLL(ctypes.util.find_library("m"))
+libm_library = symbols.get_symbols(libm)
 
 # ______________________________________________________________________
 

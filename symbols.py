@@ -19,18 +19,18 @@ map = lambda f, xs: list(imap(f, xs))
 # ______________________________________________________________________
 # Unary functions
 
-unary_integral_math_funcs = set(['abs'])
-
-# double sin(double), float sinf(float), long double sinl(long double)
-unary_floating_math_funcs = set([
-    'sin', 'cos', 'tan', 'acos', 'asin', 'atan', 'atan2',
-    'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
-    'sqrt', 'log', 'log2', 'log10', 'erfc', 'floor', 'ceil',
-    'exp', 'exp2', 'expm1', 'rint', 'log1p', 'abs',
-])
+unary_integral = set(['abs'])
 
 # double complex csin(double complex), ...
-unary_complex_math_funcs = set(unary_floating_math_funcs)
+unary_complex = set([
+    'sin', 'cos', 'tan', 'acos', 'asin', 'atan', 'atan2',
+    'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
+    'sqrt', 'log', 'log2', 'log10', 'exp', 'exp2', 'expm1',
+    'log1p', 'abs',
+])
+
+# double sin(double), float sinf(float), long double sinl(long double)
+unary_floating = unary_complex | set(['erfc', 'floor', 'ceil', 'rint'])
 
 # ______________________________________________________________________
 # Unary signatures
@@ -41,9 +41,9 @@ floating  = map(tollvm, (float32, float64, float128))
 complexes = map(tollvm, (complex64, complex128, complex256))
 
 unary = [
-    (integral, unary_integral_math_funcs),
-    (floating, unary_floating_math_funcs),
-    (complexes, unary_complex_math_funcs),
+    (integral, unary_integral),
+    (floating, unary_floating),
+    (complexes, unary_complex),
 ]
 
 # ______________________________________________________________________
@@ -75,11 +75,11 @@ def unary_math_suffix(name, ltype):
     if name == 'abs':
         return absname(ltype)
     elif ltype.kind in float_kinds:
-        assert name in unary_floating_math_funcs
+        assert name in unary_floating
         return _float_name(name, ltype)
     else:
         assert ltype.kind == TYPE_STRUCT, ltype
-        assert name in unary_complex_math_funcs
+        assert name in unary_complex
         return _complex_name(name, ltype)
 
 # ______________________________________________________________________
@@ -115,10 +115,3 @@ def get_symbols(libm, mangler=unary_math_suffix, have_symbol=have_symbol):
                     print("Missing symbol: %s %s(%s)" % (ty, cname, ty))
 
     return funcptrs
-
-# ______________________________________________________________________
-# openlibm
-
-symbol_data = open(os.path.join(os.path.dirname(__file__), "Symbol.map")).read()
-symbols = set(word.rstrip(';') for word in symbol_data.split())
-openlibm_have_symbol = symbols.__contains__
