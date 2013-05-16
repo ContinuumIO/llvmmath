@@ -12,14 +12,18 @@ from distutils import sysconfig
 from os.path import join, dirname
 from subprocess import check_call
 
+from numba.pycc import compiler
+
 import numpy as np
 
 root = dirname(__file__)
 mathcode = join(root, 'mathcode')
+shared_ending = compiler.find_shared_ending()
 
 default_config = {
     'CLANG':      'clang',
     'CONV_TEMPL': join('generator', 'conv_template.py'),
+    'OUTPUT':     'shared', #'bitcode',
 }
 
 incdirs = [np.get_include(), sysconfig.get_python_inc(), join(mathcode, 'private')]
@@ -34,10 +38,19 @@ def build(config=default_config):
     check_call([sys.executable, config['CONV_TEMPL'],
                 join(mathcode, 'npy_math_complex.c.src')])
 
+    bitcode = config['OUTPUT'] == 'bitcode'
+    if bitcode:
+        args = ['-S']
+    else:
+        args = ['-fPIC']
+
     # Compile to bitcode with clang
-    check_call([config['CLANG'], '-S', '-emit-llvm', '-O4',
-                '-o',join(mathcode, 'mathcode.s'),
-                join(mathcode, 'mathcode.c')] + includes)
+    check_call([config['CLANG'], '-emit-llvm', '-O4', '-march=native',
+                '-c', 'mathcode.c'] + args + includes, cwd=mathcode)
+
+    if not bitcode:
+        check_call([config['CLANG'], '-shared', 'mathcode.o',
+                    '-o', 'mathcode' + shared_ending], cwd=mathcode)
 
 #------------------------------------------------------------------------
 # Generate numpy config.h -- numpy/core/setup.py:generate_config_h
