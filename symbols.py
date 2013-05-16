@@ -23,14 +23,15 @@ unary_integral = set(['abs'])
 
 # double complex csin(double complex), ...
 unary_complex = set([
-    'sin', 'cos', 'tan', 'acos', 'asin', 'atan', 'atan2',
+    'sin', 'cos', 'tan', 'acos', 'asin', 'atan',
     'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
     'sqrt', 'log', 'log2', 'log10', 'exp', 'exp2', 'expm1',
     'log1p', 'abs',
 ])
 
 # double sin(double), float sinf(float), long double sinl(long double)
-unary_floating = unary_complex | set(['erfc', 'floor', 'ceil', 'rint'])
+# TODO: erf, erfc, gamma, lgamme
+unary_floating = unary_complex | set(['floor', 'ceil', 'rint', 'atan2'])
 
 # ______________________________________________________________________
 # Unary signatures
@@ -95,7 +96,7 @@ def get_symbols(libm, mangler=unary_math_suffix, have_symbol=have_symbol):
     :param mangler: (name, llvm_type) -> math_name
     :returns: { func_name : { return_type, argtype) : func_addr } }
     """
-
+    missing = []
     funcptrs = collections.defaultdict(dict)
 
     def add_func(name, cname, ty):
@@ -111,7 +112,7 @@ def get_symbols(libm, mangler=unary_math_suffix, have_symbol=have_symbol):
                     # print("found", cname)
                     add_func(name, cname, ty)
                 else:
-                    pass
-                    print("Missing symbol: %s %s(%s)" % (ty, cname, ty))
+                    missing.append((cname, ty))
+                    # print("Missing symbol: %s %s(%s)" % (ty, cname, ty))
 
-    return funcptrs
+    return funcptrs, missing

@@ -5,5 +5,6 @@ from numba.support.math_support import math_support, symbols
 
 # library = symbols.get_symbols(math_support.openlibm)
 
-library = symbols.get_symbols(math_support.umath, math_support.umath_mangler)
+library, missing = symbols.get_symbols(math_support.umath, math_support.umath_mangler)
 print(library)
+print(missing)
