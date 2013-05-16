@@ -102,7 +102,8 @@ def get_symbols(libm, mangler=unary_math_suffix, have_symbol=have_symbol):
     def add_func(name, cname, ty):
         func = getattr(libm, cname)
         p = ctypes.cast(func, ctypes.c_void_p).value
-        funcptrs[name][ty, ty] = p
+        sty = str(ty) # llvm types don't hash properly
+        funcptrs[name][sty, sty] = p
 
     for types, funcs in unary:
         for ty in types:

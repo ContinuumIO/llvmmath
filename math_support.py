@@ -75,16 +75,16 @@ def link_llvm_math_intrinsics(engine, module, library):
     Add a runtime address for all global functions named numba.math.*
     """
     # find all known math intrinsics and implement them.
-    return
-    for gv in module.list_globals():
-        name = gv.getName()
-        if name.startswith("numba.math."):
-            assert not gv.getInitializer()
-            assert gv.type.kind == llvm.core.TYPE_FUNCTION
+    for lfunc in module.functions:
+        if lfunc.name.startswith("numba.math."):
+            _, _, name = lfunc.name.rpartition('.')
+            assert name in library
 
-            signatures = library[gv.name]
-            restype = gv.return_type
-            argtype = gv.args[0]
+            signatures = library[name]
 
-            ptr = signatures[restype, argtype]
-            engine.addGlobalMapping(gv, ptr)
+            restype = lfunc.type.pointee.return_type
+            argtype = lfunc.type.pointee.args[0]
+
+            ptr = signatures[str(restype), str(argtype)]
+            engine.add_global_mapping(lfunc, ptr)
+            # print("adding", lfunc, ptr)
