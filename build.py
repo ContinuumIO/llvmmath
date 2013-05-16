@@ -9,7 +9,7 @@ from __future__ import print_function, division, absolute_import
 import os
 import sys
 from distutils import sysconfig
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 from subprocess import check_call
 
 from numba.pycc import compiler
@@ -22,12 +22,13 @@ shared_ending = compiler.find_shared_ending()
 
 default_config = {
     'CLANG':      'clang',
-    'CONV_TEMPL': join('generator', 'conv_template.py'),
-    'OUTPUT':     'shared', #'bitcode',
+    'CONV_TEMPL': join(root, 'generator', 'conv_template.py'),
+    # 'OUTPUT':     'shared',
+    'OUTPUT':     'bitcode',
 }
 
 incdirs = [np.get_include(), sysconfig.get_python_inc(), join(mathcode, 'private')]
-includes = ['-I' + dir for dir in incdirs]
+includes = ['-I' + abspath(dir) for dir in incdirs]
 
 def build(config=default_config):
     # Process .*.src files
@@ -40,12 +41,12 @@ def build(config=default_config):
 
     bitcode = config['OUTPUT'] == 'bitcode'
     if bitcode:
-        args = ['-S']
+        args = ['-S', '-emit-llvm']
     else:
         args = ['-fPIC']
 
     # Compile to bitcode with clang
-    check_call([config['CLANG'], '-emit-llvm', '-O4', '-march=native',
+    check_call([config['CLANG'], '-O3', '-march=native',
                 '-c', 'mathcode.c'] + args + includes, cwd=mathcode)
 
     if not bitcode:

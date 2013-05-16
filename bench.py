@@ -43,7 +43,7 @@ def _run(restype, argtype, funcname, ptr):
     t = time.time()
     call_in_loop()
     t = time.time() - t
-
+    # print(call_in_loop.lfunc)
     print("%-5s %.5f seconds (%s, %s)" % (funcname, t, restype, argtype))
 
 def run(library):
