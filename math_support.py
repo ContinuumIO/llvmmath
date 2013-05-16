@@ -68,6 +68,10 @@ dylib = 'mathcode' + compiler.find_shared_ending()
 llvmmath = ctypes.CDLL(join(root, 'mathcode', dylib))
 llvm_library, llvm_missing = symbols.get_symbols(llvmmath, mathcode_mangler)
 
+# Load llvmmath as bitcode
+bc = join(root, 'mathcode', 'mathcode.s')
+math_module = llvm.core.Module.from_assembly(open(bc))
+
 # ______________________________________________________________________
 
 def link_llvm_math_intrinsics(engine, module, library):

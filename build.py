@@ -53,6 +53,7 @@ def build(config=default_config):
         check_call([config['CLANG'], '-shared', 'mathcode.o',
                     '-o', 'mathcode' + shared_ending], cwd=mathcode)
 
+
 #------------------------------------------------------------------------
 # Generate numpy config.h -- numpy/core/setup.py:generate_config_h
 #------------------------------------------------------------------------
