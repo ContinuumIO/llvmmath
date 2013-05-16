@@ -69,6 +69,10 @@ def print_pointers():
     p(math_support.umath_library['atanh'])
 
 if __name__ == '__main__':
+    print("llvm lib")
+    run(math_support.llvm_library)
+    print()
+
     print("umath")
     run(math_support.umath_library)
     print()
