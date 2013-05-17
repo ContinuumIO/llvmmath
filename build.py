@@ -12,13 +12,17 @@ from distutils import sysconfig
 from os.path import join, dirname, abspath
 from subprocess import check_call
 
-from numba.pycc import compiler
-
+import llvm.core
 import numpy as np
+
+_configs = { 'win': '.dll', 'dar': '.so', 'default': ".so", }
+
+def find_shared_ending():
+    return _configs.get(sys.platform[:3], _configs['default'])
 
 root = dirname(__file__)
 mathcode = join(root, 'mathcode')
-shared_ending = compiler.find_shared_ending()
+shared_ending = find_shared_ending()
 
 default_config = {
     'CLANG':      'clang',
@@ -53,6 +57,9 @@ def build(config=default_config):
         check_call([config['CLANG'], '-shared', 'mathcode.o',
                     '-o', 'mathcode' + shared_ending], cwd=mathcode)
 
+def load_llvm_asm():
+    bc = join(root, 'mathcode', 'mathcode.s')
+    return llvm.core.Module.from_assembly(open(bc))
 
 #------------------------------------------------------------------------
 # Generate numpy config.h -- numpy/core/setup.py:generate_config_h

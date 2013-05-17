@@ -6,18 +6,13 @@ Benchmark some math implementations.
 
 from __future__ import print_function, division, absolute_import
 
-import os
 import time
 import ctypes
-from itertools import imap
-import collections
 
 from numba import *
 from numba.support import ctypes_support, llvm_support
-from numba.support.math_support import symbols, math_support
+from numba.support.math_support import symbols, math_support, libs
 
-import llvm.core
-import numpy.core.umath
 import numpy as np
 
 N = 10000
@@ -49,13 +44,10 @@ def _run(restype, argtype, funcname, ptr):
 def run(library):
     funcs = ['sin', 'cos', 'tan', 'log', 'sqrt', 'cosf', 'atanh']
     for funcname in funcs:
-        impls = library[funcname]
-        for types, ptr in sorted(impls.iteritems()):
-            restype, argtype = types
-            if argtype.kind not in (llvm.core.TYPE_FLOAT, llvm.core.TYPE_DOUBLE):
-                continue
-
-            _run(restype, argtype, funcname, ptr)
+        for ty in symbols.floating[:2]:
+            ptr = library.get_symbol(funcname, ty, ty)
+            assert ptr is not None, (funcname, str(ty))
+            _run(ty, ty, funcname, ptr)
 
 def print_pointers():
     def p(d):
@@ -70,16 +62,16 @@ def print_pointers():
 
 if __name__ == '__main__':
     print("llvm lib")
-    run(math_support.llvm_library)
+    run(libs.llvm_library)
     print()
 
     print("umath")
-    run(math_support.umath_library)
+    run(libs.umath_library)
     print()
 
     print("openlibm")
-    run(math_support.openlibm_library)
+    run(libs.openlibm_library)
     print()
 
     print("libm")
-    run(math_support.libm_library)
+    run(libs.libm_library)

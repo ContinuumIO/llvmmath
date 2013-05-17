@@ -6,12 +6,11 @@ Math symbols and signatures.
 
 from __future__ import print_function, division, absolute_import
 
-import os
 import ctypes
-import collections
 from itertools import imap
 
 from numba import *
+from . import ltypes
 from llvm.core import *
 
 map = lambda f, xs: list(imap(f, xs))
@@ -30,7 +29,7 @@ unary_complex = set([
 ])
 
 # double sin(double), float sinf(float), long double sinl(long double)
-# TODO: erf, erfc, gamma, lgamme
+# TODO: erf, erfc, gamma, lgamma
 unary_floating = unary_complex | set(['floor', 'ceil', 'rint', 'atan2'])
 
 # ______________________________________________________________________
@@ -51,9 +50,9 @@ unary = [
 # Naming
 
 _ints = {
-    ctypes.sizeof(ctypes.c_longlong) * 8: 'll',
-    ctypes.sizeof(ctypes.c_long) * 8:     'l',  # this should override longlong
-    ctypes.sizeof(ctypes.c_int) * 8:      '',   # this should override long
+    ltypes.l_longlong.width: 'll',
+    ltypes.l_long.width:     'l',  # this should override longlong
+    ltypes.l_int.width:      '',   # this should override long
 }
 _floats = { TYPE_DOUBLE: '', TYPE_FLOAT: 'f' }
 
