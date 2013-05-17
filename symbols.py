@@ -35,15 +35,11 @@ unary_floating = unary_complex | set(['floor', 'ceil', 'rint', 'atan2'])
 # ______________________________________________________________________
 # Unary signatures
 
-tollvm = lambda ty: ty.to_llvm()
-integral  = map(tollvm, (int_, long_, longlong))
-floating  = map(tollvm, (float32, float64, float128))
-complexes = map(tollvm, (complex64, complex128, complex256))
-
 unary = [
-    (integral, unary_integral),
-    (floating, unary_floating),
-    (complexes, unary_complex),
+    (ltypes.integral, unary_integral),
+    (ltypes.floating, unary_floating),
+    # (ltypes.complexes, unary_complex),
+    (ltypes.complexes_by_ref, unary_complex),
 ]
 
 # ______________________________________________________________________
@@ -56,31 +52,30 @@ _ints = {
 }
 _floats = { TYPE_DOUBLE: '', TYPE_FLOAT: 'f' }
 
-_int_name     = lambda name, ty: _ints.get(ty.width, '') + name
-_float_name   = lambda name, ty: name + _floats.get(ty.kind, 'l')
-_complex_name = lambda name, ty: 'c' + _float_name(name, ty.elements[0])
+int_name     = lambda name, ty: _ints.get(ty.width, '') + name
+float_name   = lambda name, ty: name + _floats.get(ty.kind, 'l')
+# _complex_name = lambda name, ty: 'c' + _float_name(name, ty.elements[0])
+complex_name = lambda name, ty: 'c' + float_name(name, ty.pointee.elements[0])
 
 float_kinds = (TYPE_FLOAT, TYPE_DOUBLE, TYPE_X86_FP80, TYPE_FP128, TYPE_PPC_FP128)
 
 def absname(ltype):
     if ltype.kind == TYPE_INTEGER:
-        return _int_name('abs', ltype)
+        return int_name('abs', ltype)
     elif ltype.kind in float_kinds:
-        return _float_name('fabs', ltype)
+        return float_name('fabs', ltype)
     else:
-        assert ltype.kind == TYPE_STRUCT, ltype
-        return _complex_name('abs', ltype)
+        return complex_name('abs', ltype)
 
 def unary_math_suffix(name, ltype):
     if name == 'abs':
         return absname(ltype)
     elif ltype.kind in float_kinds:
         assert name in unary_floating
-        return _float_name(name, ltype)
+        return float_name(name, ltype)
     else:
-        assert ltype.kind == TYPE_STRUCT, ltype
         assert name in unary_complex
-        return _complex_name(name, ltype)
+        return complex_name(name, ltype)
 
 # ______________________________________________________________________
 # Retrieve symbols

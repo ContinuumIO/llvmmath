@@ -484,6 +484,18 @@ nc_sin@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
+/*
+@ctype@
+nc_sin@c@(@ctype@ x)
+{
+    @ctype@ r;
+    @ftype@ xr=x.real, xi=x.imag;
+    r.real = npy_sin@c@(xr)*npy_cosh@c@(xi);
+    r.imag = npy_cos@c@(xr)*npy_sinh@c@(xi);
+    return r;
+}
+*/
+
 void
 nc_sinh@c@(@ctype@ *x, @ctype@ *r)
 {
