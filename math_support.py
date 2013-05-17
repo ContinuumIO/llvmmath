@@ -6,15 +6,15 @@ Support for math as a postpass on LLVM IR.
 
 from __future__ import print_function, division, absolute_import
 
+import abc
 import llvm.core as lc
+import llvm.passes as lp
+import llvm.ee as le
 from llvmpy.api import llvm
 
 llvm_context = llvm.getGlobalContext()
 
-def link_pointer(engine, module, library, lfunc, ptr):
-    engine.add_global_mapping(lfunc, ptr)
-
-def link_complex(engine, module, library, lfunc_src, lfunc_dst):
+def _link_complex(engine, module, library, lfunc_src, lfunc_dst):
     """
     Rewrite
         %r = sin({ double, double}* a)
@@ -41,24 +41,59 @@ def link_complex(engine, module, library, lfunc_src, lfunc_dst):
     assert not lsrc.list_use(), map(str, lsrc.list_use())
     lsrc.eraseFromParent()
 
-def link_llvm_asm(engine, module, library, lfunc_src, lfunc_dst):
-    module.link_in(library.module)
-    lfunc_dst = module.get_function_named(lfunc_dst.name)
-    v = lfunc_src._ptr
-    if lfunc_src.type != lfunc_dst.type:
-        if lfunc_dst.name.startswith('nc_'):
-            link_complex(engine, module, library, lfunc_src, lfunc_dst)
+# ______________________________________________________________________
+# Library linkers
+
+class Linker(object):
+    "Link math functions into a destination module"
+
+    def setup(self, engine, module, library):
+        "Link math functions from the library into the destination module"
+
+    def link(self, engine, module, library, lfunc_src, lfunc_dst):
+        "Replace unbound math function lfunc_src with math function lfunc_dst"
+
+    def optimize(self, engine, module, library):
+        "Optimize after linking (inlining, DCE, etc)"
+
+class LLVMLinker(Linker):
+
+    def setup(self, engine, module, library):
+        module.link_in(library.module)
+
+    def link(self, engine, module, library, lfunc_src, lfunc_dst):
+        "Link the math to an LLVM math library"
+        lfunc_dst = module.get_function_named(lfunc_dst.name)
+        v = lfunc_src._ptr
+        if lfunc_src.type != lfunc_dst.type:
+            if lfunc_dst.name.startswith('nc_'):
+                _link_complex(engine, module, library, lfunc_src, lfunc_dst)
+            else:
+                raise ValueError("Incorrect signature for %s (got '%s', need '%s')" % (
+                                    lfunc_src.name, lfunc_dst.type, lfunc_src.type))
         else:
-            print(lfunc_dst.name)
-            print (library)
-            raise ValueError("Incorrect signature for %s (got '%s', need '%s')" % (
-                                lfunc_src.name, lfunc_dst.type, lfunc_src.type))
-    else:
-        v.replaceAllUsesWith(lfunc_dst._ptr)
+            v.replaceAllUsesWith(lfunc_dst._ptr)
+
+    def optimize(self, engine, module, library):
+        "Try to eliminate unused functions"
+        # for lfunc_math in library.module.functions:
+        #     lfunc = module.get_function_named(lfunc_math.name)
+        #     lfunc.linkage = lc.LINKAGE_INTERNAL
+        #
+        # fpm = lp.PassManager.new()
+        # fpm.add(lp.PASS_GLOBALDCE)
+        # fpm.run(module)
+        return
+
+class ExternalLibraryLinker(Linker):
+
+    def link(self, engine, module, library, lfunc, ptr):
+        "Link the math by adding pointers to functions in external code"
+        engine.add_global_mapping(lfunc, ptr)
 
 # ______________________________________________________________________
 
-def link_llvm_math_intrinsics(engine, module, library, link, replacements):
+def link_llvm_math_intrinsics(engine, module, library, linker, replacements):
     """
     Link all abstract math calls by adding a runtime address or by replacing
     callsites with a different LLVM function.
@@ -67,6 +102,8 @@ def link_llvm_math_intrinsics(engine, module, library, link, replacements):
     :param link: link function (e.g. link_pointer)
     :param replacements: { abstract_math_name -> math_name }
     """
+    linker.setup(engine, module, library)
+
     # find all known math intrinsics and implement them.
     for lfunc in module.functions:
         if lfunc.name in replacements:
@@ -83,9 +120,7 @@ def link_llvm_math_intrinsics(engine, module, library, link, replacements):
 
             linkarg = library.get_symbol(name, restype, argtype)
             assert linkarg, (name, str(restype), str(argtype), library.symbols[name])
-            link(engine, module, library, lfunc, linkarg)
+            linker.link(engine, module, library, lfunc, linkarg)
             del lfunc # this is dead now, don't touch
-            print("adding", linkarg)
 
-    print(module)
-    print("----------------")
+    linker.optimize(engine, module, library)
