@@ -85,35 +85,50 @@ def unary_math_suffix(name, ltype):
 
 # ______________________________________________________________________
 # Retrieve symbols
-have_symbol = lambda libm, cname: hasattr(libm, cname)
 
-def get_symbols(libm, mangler=unary_math_suffix, have_symbol=have_symbol):
+class Lib(object):
+    def __init__(self, libm, mangler=unary_math_suffix, have_symbol=None):
+        """
+        :param mangler: (name, llvm_type) -> math_name
+        """
+        self.libm = libm
+        self.mangle = mangler
+        self._have_symbol = have_symbol
+
+    def have_symbol(self, cname):
+        if self._have_symbol is None:
+            return self.get_libm_symbol(cname)
+        return self._have_symbol(self.libm, cname)
+
+class CtypesLib(Lib):
+    def get_libm_symbol(self, cname):
+        func = getattr(self.libm, cname, None)
+        if func is not None:
+            return ctypes.cast(func, ctypes.c_void_p).value
+
+class LLVMLib(Lib):
+    def get_libm_symbol(self, cname):
+        try:
+            return self.libm.get_function_named(cname)
+        except llvm.LLVMException:
+            return None
+
+def get_symbols(library, libm):
     """
     Populate a dict with runtime addressed of math functions from a given
     ctypes library.
 
-    :param libm: ctypes library of math functions
-    :param mangler: (name, llvm_type) -> math_name
-    :returns: { func_name : { return_type, argtype) : func_addr } }
+    :param library: math_support.Library to add symbols to
+    :param libm: ctypes or LLVM library of math functions
     """
-    missing = []
-    funcptrs = collections.defaultdict(dict)
-
-    def add_func(name, cname, ty):
-        func = getattr(libm, cname)
-        p = ctypes.cast(func, ctypes.c_void_p).value
-        sty = str(ty) # llvm types don't hash properly
-        funcptrs[name][sty, sty] = p
-
     for types, funcs in unary:
         for ty in types:
             for name in funcs:
-                cname = mangler(name, ty)
-                if have_symbol(libm, cname):
-                    # print("found", cname)
-                    add_func(name, cname, ty)
-                else:
-                    missing.append((cname, ty))
-                    # print("Missing symbol: %s %s(%s)" % (ty, cname, ty))
+                if library.get_symbol(name, ty, ty):
+                    continue
+                cname = libm.mangle(name, ty)
+                if libm.have_symbol(cname):
+                    symbol = libm.get_libm_symbol(cname)
+                    library.add_symbol(name, ty, ty, symbol)
 
-    return funcptrs, missing
+    return library
