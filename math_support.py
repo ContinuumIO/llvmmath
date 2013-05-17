@@ -6,7 +6,6 @@ Support for math as a postpass on LLVM IR.
 
 from __future__ import print_function, division, absolute_import
 
-import abc
 import llvm.core as lc
 import llvm.passes as lp
 import llvm.ee as le

@@ -10,8 +10,8 @@ import time
 import ctypes
 
 from numba import *
-from numba.support import ctypes_support, llvm_support
-from numba.support.math_support import symbols, math_support, libs
+from numba.support import ctypes_support
+from numba.support.math_support import symbols, math_support, libs, llvm_support
 
 import numpy as np
 
