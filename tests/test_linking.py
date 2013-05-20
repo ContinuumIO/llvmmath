@@ -115,9 +115,9 @@ def test_link_complex():
 
     result = cmath.sin(input)
 
-    our_result = (result, #call_complex_math(m.mycsinf, input),
-                  call_complex_math(m.mycsin,  input),
-                  result, #call_complex_math(m.mycsinl, input)
+    our_result = (result, #test_support.call_complex_byval(m.mycsinf, input),
+                  test_support.call_complex_byval(m.mycsin,  input),
+                  result, #test_support.call_complex_byval(m.mycsinl, input)
                   )
 
     exp_result = [result] * 3

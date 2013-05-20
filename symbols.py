@@ -55,7 +55,7 @@ class LLVMLib(Lib):
         except llvm.LLVMException:
             return None
 
-def get_symbols(library, libm):
+def get_symbols(library, libm, required_symbols=required_symbols):
     """
     Populate a dict with runtime addressed of math functions from a given
     ctypes library.

@@ -4,11 +4,14 @@ from __future__ import print_function, division, absolute_import
 from StringIO import StringIO
 
 from .. import parsesyms
+from ..parsesyms import Symbol
 
 testfuncs = """
 float sin(float)
 complex pow(complex, int)
 int abs(int)
+float abs(float)
+float abs(complex)
 """
 
 testcomments = """
@@ -27,7 +30,21 @@ def test_parsefuncs():
     assert syms['sin'].argtypes == ('float',)
 
     assert syms['pow'].argtypes == ('complex', 'int')
-    assert syms['abs'].restype == 'int'
+
+def test_duplicates():
+    syms = parsesyms.parse_symbols(StringIO(testfuncs))
+    collected = []
+    for sym in syms:
+        if sym.name == 'abs':
+            collected.append(sym)
+
+    assert len(collected) == 3
+
+    expected = set([Symbol('abs', 'int', ('int',)),
+                    Symbol('abs', 'float', ('float',)),
+                    Symbol('abs', 'float', ('complex',))])
+
+    assert set(collected) == expected
 
 def test_comments():
     syms = symdict(parsesyms.parse_symbols(StringIO(testcomments)))

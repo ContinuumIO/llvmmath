@@ -2,7 +2,9 @@
 from __future__ import print_function, division, absolute_import
 
 import types
+from functools import partial
 
+import llvm.core as lc
 import numpy as np
 
 from numba.support.math_support import ltypes, libs, llvm_support, symbols
@@ -47,6 +49,9 @@ def run(libm, name, sig, dtype):
     npy_name = ufunc_map.get(name, name)
     npy_func = getattr(np, npy_name)
     func = getattr(libm, cname)
+    if sig.restype.kind == lc.TYPE_STRUCT:
+        print(name, "sig", sig)
+        func = partial(test_support.call_complex_byref, func)
 
     test_data = get_idata(dtype)
     if npy_name.startswith('arc'):
@@ -55,6 +60,7 @@ def run(libm, name, sig, dtype):
     out = np.empty(upper - lower, dtype)
 
     for i in range(upper - lower):
+        print(test_data)
         out[i] = func(test_data[i])
 
     npy_out = npy_func(test_data)
@@ -66,6 +72,7 @@ def run_from_types(library, libm, types):
     for name, signatures in library.symbols.iteritems():
         for ty, dtype in zip(types, npy_typemap[types]):
             sig = ltypes.Signature(ty, [ty])
+            print(name, signatures)
             if sig in signatures:
                 run(libm, name, sig, dtype)
 
