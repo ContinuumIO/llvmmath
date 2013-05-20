@@ -2,6 +2,7 @@
 from __future__ import print_function, division, absolute_import
 
 import ctypes
+import collections
 from . import build
 from llvm.core import Type
 
@@ -26,3 +27,13 @@ complexes = [l_complex64, l_complex128, l_complex256]
 # complexes = [ty('nc_if'), ty('nc_i'), ty('nc_il')]
 
 complexes_by_ref = [Type.pointer(ct) for ct in complexes]
+
+# ______________________________________________________________________
+
+_Signature = collections.namedtuple('_Signature', ['restype', 'argtypes'])
+
+def Signature(restype, argtypes):
+    # types may not hash properly, use the str
+    return _Signature(str(restype), tuple(map(str, argtypes)))
+
+# ______________________________________________________________________

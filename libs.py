@@ -11,7 +11,7 @@ import ctypes.util
 from os.path import join, dirname
 import collections
 
-from numba.support.math_support import symbols, build
+from numba.support.math_support import symbols, build, ltypes
 
 import llvm.core
 import numpy.core.umath
@@ -27,24 +27,25 @@ class Library(object):
         self.missing = []
 
     def add_symbol(self, name, restype, argtype, val):
-        args = str(restype), str(argtype) # types don't hash properly yet
-        assert args not in self.symbols[name], (args, self.symbols)
-        self.symbols[name][args] = val
+        sig = ltypes.Signature(restype, [argtype])
+        assert sig not in self.symbols[name], (sig, self.symbols)
+        self.symbols[name][sig] = val
 
-    def get_symbol(self, name, restype, argtype):
-        return self.symbols.get(name, {}).get((str(restype), str(argtype)))
+    def get_symbol(self, name, signature):
+        return self.symbols.get(name, {}).get(signature)
 
     def __str__(self):
         result = []
         for symbol, d in sorted(self.symbols.iteritems()):
-            for (rty, argty), linkable in d.iteritems():
-                result.append("%s %s(%s): %s" % (rty, symbol, argty, linkable))
+            for (rty, argtys), linkable in d.iteritems():
+                result.append("%s %s(%s): %s" % (
+                    rty, symbol, ", ".join(map(str, argtys)), linkable))
         return "Library(\n%s)" % "\n    ".join(result)
 
 class LLVMLibrary(Library):
     def __init__(self, module):
         super(LLVMLibrary, self).__init__()
-        self.module = module
+        self.module = module # LLVM math module
 
 # ______________________________________________________________________
 # openlibm

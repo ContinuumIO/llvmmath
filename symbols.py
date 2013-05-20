@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Math symbols and signatures.
+Math symbols and signatures from the low-level math library.
 """
 
 from __future__ import print_function, division, absolute_import
 
 import ctypes
-from itertools import imap
 
 from numba import *
 from . import ltypes
 from llvm.core import *
-
-map = lambda f, xs: list(imap(f, xs))
 
 # ______________________________________________________________________
 # Unary functions
@@ -118,8 +115,9 @@ def get_symbols(library, libm):
     for types, funcs in unary:
         for ty in types:
             for name in funcs:
+                sig = ltypes.Signature(ty)
                 if library.get_symbol(name, ty, ty):
-                    continue
+                    continue # Duplicate symbol?
                 cname = libm.mangle(name, ty)
                 if libm.have_symbol(cname):
                     symbol = libm.get_libm_symbol(cname)
