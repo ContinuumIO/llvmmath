@@ -12,10 +12,10 @@ from llvm.ee import GenericValue
 
 def test_complex_abi():
     # run_test(ltypes.l_complex64)  # This one breaks
-    run_test(ltypes.l_complex128)
+    run(ltypes.l_complex128)
     # run_test(ltypes.l_complex256) # This one breaks
 
-def run_test(ty):
+def run(ty):
     engine, mod, pm = test_support.make_llvm_context()
 
     lfunc = make_func(mod, ty)

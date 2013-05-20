@@ -40,34 +40,34 @@ ufunc_map = {
     'atan2': 'arctan2',
 }
 
-def run(libm, name, ty, dtype):
-    print("Running %s %s" % (name, ty))
-    cname = libs.mathcode_mangler(name, ty)
+def run(libm, name, sig, dtype):
+    print("Running %s %s" % (name, sig))
+    cname = libs.mathcode_mangler(name, sig)
 
     npy_name = ufunc_map.get(name, name)
     npy_func = getattr(np, npy_name)
     func = getattr(libm, cname)
 
     test_data = get_idata(dtype)
+    if npy_name.startswith('arc'):
+        return
+
     out = np.empty(upper - lower, dtype)
 
     for i in range(upper - lower):
         out[i] = func(test_data[i])
 
     npy_out = npy_func(test_data)
-    assert np.allclose(out, npy_out), (name, ty, dtype, npy_out - out)
+    assert np.allclose(out, npy_out), (name, sig, dtype, npy_out - out)
 
 # ______________________________________________________________________
 
-def run_ints(libm):
-    for name in symbols.unary_integral:
-        for ty, dtype in zip(ltypes.integral, np_integral):
-            run(libm, name, ty, dtype)
-
-def run_floats(libm):
-    for name in symbols.unary_floating:
-        for ty, dtype in zip(ltypes.floating, np_floating):
-            run(libm, name, ty, dtype)
+def run_from_types(library, libm, types):
+    for name, signatures in library.symbols.iteritems():
+        for ty, dtype in zip(types, npy_typemap[types]):
+            sig = ltypes.Signature(ty, [ty])
+            if sig in signatures:
+                run(libm, name, sig, dtype)
 
 def test_llvm_library():
     lib = libs.math_library
@@ -80,6 +80,7 @@ def test_llvm_library():
     print(libm.npy_sinl(10.0))
 
     # run_int_tests(libm)
-    run_floats(libm)
+    run_from_types(lib, libm, ltypes.floating)
+    run_from_types(lib, libm, ltypes.complexes)
 
 test_llvm_library()

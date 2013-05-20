@@ -122,6 +122,3 @@ def test_link_complex():
 
     exp_result = [result] * 3
     assert np.allclose(our_result, exp_result), (our_result, exp_result)
-
-test_link_real()
-test_link_complex()

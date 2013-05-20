@@ -7,5 +7,3 @@ def test_llvm_linking():
     lib = libs.math_library
     linker = math_support.LLVMLinker()
     print(lib)
-
-test_llvm_linking()
