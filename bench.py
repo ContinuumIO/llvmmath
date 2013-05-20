@@ -11,7 +11,7 @@ import ctypes
 
 from numba import *
 from numba.support import ctypes_support
-from numba.support.math_support import symbols, math_support, libs, llvm_support
+from numba.support.math_support import symbols, linking, libs, llvm_support
 
 import numpy as np
 
@@ -54,11 +54,11 @@ def print_pointers():
         for k, v in sorted(d.items()):
             print(k[1], hex(v))
     print("open")
-    p(math_support.openlibm_library['atanh'])
+    p(linking.openlibm_library['atanh'])
     print("libm")
-    p(math_support.libm_library['atanh'])
+    p(linking.libm_library['atanh'])
     print("umath")
-    p(math_support.umath_library['atanh'])
+    p(linking.umath_library['atanh'])
 
 if __name__ == '__main__':
     print("llvm lib")

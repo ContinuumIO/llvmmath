@@ -8,7 +8,7 @@ from functools import partial
 import math
 import cmath
 
-from .. import ltypes, llvm_support, math_support, libs
+from .. import ltypes, llvm_support, linking, libs
 from . import test_support
 
 import numpy as np
@@ -43,8 +43,8 @@ def new_ctx():
     replacements = all_replacements()
     # print(replacements)
 
-    linker = math_support.LLVMLinker()
-    link = partial(math_support.link_llvm_math_intrinsics,
+    linker = linking.LLVMLinker()
+    link = partial(linking.link_llvm_math_intrinsics,
                    engine, mod, libs.math_library, linker, replacements)
     return Ctx(engine, mod, pm, link)
 

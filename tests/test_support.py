@@ -38,9 +38,7 @@ def call_complex_byref(f, input):
     f(c_input_p, c_result_p)
 
     if issubclass(c_resty, ctypes.Structure):
-        print("returning...")
         return complex(c_result.e0, c_result.e1)
-    print("else..........", c_resty)
     return c_resty
 
 def call_complex_byval_return(f, input):

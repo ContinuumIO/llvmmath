@@ -23,7 +23,6 @@ def _link_complex(engine, module, library, lfunc_src, lfunc_dst):
         %a1 = bitcast { double, double}* a to %struct.npy_cdouble*
         %r = sin(%struct.npy_cdouble* a)
     """
-    print("lingking complex...", lfunc_src, lfunc_dst)
     module, lsrc, ldst = module._ptr, lfunc_src._ptr, lfunc_dst._ptr
     argtypes = [arg.getType() for arg in ldst.getArgumentList()]
 

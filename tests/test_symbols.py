@@ -3,7 +3,7 @@ from __future__ import print_function, division, absolute_import
 
 from StringIO import StringIO
 
-from .. import parsesyms, symbols, math_support, libs
+from .. import parsesyms, symbols, linking, libs
 from ..parsesyms import Symbol
 from .. import ltypes as l
 
