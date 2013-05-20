@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+"""
+Some test helpers.
+"""
+
 from __future__ import print_function, division, absolute_import
 
 import ctypes
@@ -11,6 +16,7 @@ import llvm.ee as le
 LLVMContext = collections.namedtuple("LLVMContext", "engine module pm")
 
 def make_llvm_context(name="mymodule"):
+    "Return an LLVM context (engine, module, passmanager)"
     module = lc.Module.new("numba_executable_module")
     features = '-avx'
     tm = le.TargetMachine.new(opt=3, cm=le.CM_JITDEFAULT, features=features)
@@ -21,12 +27,17 @@ def make_llvm_context(name="mymodule"):
     return LLVMContext(engine, module, passmanagers.pm)
 
 def call_complex_byval(f, input):
+    "Call unary complex function by value, e.g. complex func(complex)"
     c_argty = f.argtypes[0]
     c_input = c_argty(input.real, input.imag)
     c_result = f(c_input)
     return complex(c_result.e0, c_result.e1)
 
 def call_complex_byref(f, input):
+    """
+    Call unary complex function by reference, e.g.
+    void sin(complex *, complex *)
+    """
     if f.restype is not None:
         return call_complex_byval_return(f, input)
     c_argty = f.argtypes[0]._type_ # get base type from pointer argtype
