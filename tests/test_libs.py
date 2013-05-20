@@ -14,6 +14,12 @@ np_integral = ['i', 'l', np.longlong]
 np_floating = ['f', 'd', np.float128]
 np_complexes = [np.complex64, np.complex128, np.complex256]
 
+npy_typemap = {
+    ltypes.integral: np_integral,
+    ltypes.floating: np_floating,
+    ltypes.complexes: np_complexes,
+}
+
 lower, upper = 1, 10
 
 def get_idata(dtype):
@@ -24,11 +30,22 @@ def get_cdata(dtype):
 
 # ______________________________________________________________________
 
+ufunc_map = {
+    'asin': 'arcsin',
+    'acos': 'arccos',
+    'atan': 'arctan',
+    'asinh': 'arcsinh',
+    'acosh': 'arccosh',
+    'atanh': 'arctanh',
+    'atan2': 'arctan2',
+}
+
 def run(libm, name, ty, dtype):
     print("Running %s %s" % (name, ty))
     cname = libs.mathcode_mangler(name, ty)
 
-    npy_func = getattr(np, name)
+    npy_name = ufunc_map.get(name, name)
+    npy_func = getattr(np, npy_name)
     func = getattr(libm, cname)
 
     test_data = get_idata(dtype)
@@ -42,8 +59,6 @@ def run(libm, name, ty, dtype):
 
 # ______________________________________________________________________
 
-non_ufuncs = ('asin', 'acos', 'atan', 'asinh', 'acosh', 'atanh', 'atan2')
-
 def run_ints(libm):
     for name in symbols.unary_integral:
         for ty, dtype in zip(ltypes.integral, np_integral):
@@ -51,9 +66,6 @@ def run_ints(libm):
 
 def run_floats(libm):
     for name in symbols.unary_floating:
-        if name in non_ufuncs: # TODO: amend
-            continue
-
         for ty, dtype in zip(ltypes.floating, np_floating):
             run(libm, name, ty, dtype)
 
@@ -66,6 +78,7 @@ def test_llvm_library():
     llvm_support.wrap_llvm_module(lib.module, engine, libm)
 
     print(libm.npy_sinl(10.0))
+
     # run_int_tests(libm)
     run_floats(libm)
 

@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
-Naming of math functions.
+Parsing of symbol file the following format:
+
+    float sin(float) # some comment
+    complex pow(complex, complex)
 """
 
 from __future__ import print_function, division, absolute_import

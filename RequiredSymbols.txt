@@ -64,7 +64,7 @@ complex exp(complex)
 complex acos(complex)
 complex log10(complex)
 complex sin(complex)
-complex tan(complex
+complex tan(complex)
 
 float abs(complex)
 complex pow(complex, complex)

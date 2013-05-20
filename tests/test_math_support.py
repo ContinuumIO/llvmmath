@@ -6,4 +6,6 @@ from numba.support.math_support import math_support, symbols, ltypes, libs
 def test_llvm_linking():
     lib = libs.math_library
     linker = math_support.LLVMLinker()
+    print(lib)
 
+test_llvm_linking()

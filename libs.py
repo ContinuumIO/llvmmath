@@ -11,7 +11,7 @@ import ctypes.util
 from os.path import join, dirname
 import collections
 
-from numba.support.math_support import symbols, build, ltypes
+from numba.support.math_support import symbols, build, ltypes, naming
 
 import llvm.core
 import numpy.core.umath
@@ -26,8 +26,7 @@ class Library(object):
         self.symbols = collections.defaultdict(dict)
         self.missing = []
 
-    def add_symbol(self, name, restype, argtype, val):
-        sig = ltypes.Signature(restype, [argtype])
+    def add_symbol(self, name, sig, val):
         assert sig not in self.symbols[name], (sig, self.symbols)
         self.symbols[name][sig] = val
 
@@ -63,7 +62,7 @@ openlibm_library = symbols.get_symbols(
 
 # print("---------- umath -----------")
 umath = ctypes.CDLL(numpy.core.umath.__file__)
-umath_mangler = lambda name, ty: 'npy_' + symbols.unary_math_suffix(name, ty)
+umath_mangler = lambda name, ty: 'npy_' + naming.mathname(name, ty)
 umath_library = symbols.get_symbols(
     Library(), symbols.CtypesLib(umath, mangler=umath_mangler))
 
@@ -77,19 +76,20 @@ libm_library = symbols.get_symbols(Library(), symbols.CtypesLib(libm))
 # ______________________________________________________________________
 
 # print("---------- mathcode -----------")
-def mathcode_mangler(name, ty):
+def mathcode_mangler(name, sig):
+    ty = sig.argtypes[0]
     if name == 'abs':
-        absname = symbols.absname(ty)
+        absname = naming.absname(ty)
         if ty.kind == llvm.core.TYPE_INTEGER:
             return absname # abs(), labs(), llabs()
-        elif ty.kind in symbols.float_kinds:
+        elif ltypes.is_float(ty):
             return 'npy_' + absname
         else:
             return 'nc_' + absname
-    elif ty.kind in (llvm.core.TYPE_STRUCT, llvm.core.TYPE_POINTER):
-        return 'nc_' + symbols.unary_math_suffix(name, ty.pointee.elements[0])
+    elif ty.kind == llvm.core.TYPE_STRUCT:
+        return 'nc_' + naming.float_name(name, ty.elements[0])
     else:
-        return umath_mangler(name, ty)
+        return umath_mangler(name, sig)
 
 dylib = 'mathcode' + build.find_shared_ending()
 llvmmath = ctypes.CDLL(join(root, 'mathcode', dylib))
