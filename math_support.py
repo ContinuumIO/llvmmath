@@ -6,6 +6,8 @@ Support for math as a postpass on LLVM IR.
 
 from __future__ import print_function, division, absolute_import
 
+from . import ltypes
+
 import llvm.core as lc
 import llvm.passes as lp
 import llvm.ee as le
@@ -107,18 +109,18 @@ def link_llvm_math_intrinsics(engine, module, library, linker, replacements):
     for lfunc in module.functions:
         if lfunc.name in replacements:
             name = replacements[lfunc.name]
-            args = lfunc.type.pointee.args
-
+            argtypes = lfunc.type.pointee.args
             restype = lfunc.type.pointee.return_type
-            argtype = args[0]
 
             # Complex numbers are passed by reference
             if restype.kind == lc.TYPE_VOID:
-                assert len(args) == 2
-                restype = args[1]
+                assert len(argtypes) == 2
+                restype = argtypes[1].pointee
+                argtypes = [argtypes[0].pointee]
 
-            linkarg = library.get_symbol(name, restype, argtype)
-            assert linkarg, (name, str(restype), str(argtype), library.symbols[name])
+            sig = ltypes.Signature(restype, argtypes)
+            linkarg = library.get_symbol(name, sig)
+            assert linkarg, (name, sig, library.symbols[name])
             linker.link(engine, module, library, lfunc, linkarg)
             del lfunc # this is dead now, don't touch
 

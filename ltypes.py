@@ -41,5 +41,8 @@ def strsig(restype, argtypes):
 
 Signature = collections.namedtuple('Signature', ['restype', 'argtypes'])
 Signature.__hash__ = lambda self: hash(strsig(*self))
+Signature.__eq__ = lambda self, other: strsig(*self) == strsig(*other)
+Signature.__neq__ = lambda self, other: strsig(*self) != strsig(*other)
+Signature.__repr__ = lambda self: str(strsig(*self))
 
 # ______________________________________________________________________
