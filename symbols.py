@@ -76,5 +76,7 @@ def get_symbols(library, libm, required_symbols=required_symbols):
             if libm.have_symbol(cname):
                 libm_symbol = libm.get_libm_symbol(cname)
                 library.add_symbol(symbol.name, sig, libm_symbol)
+            else:
+                library.missing.append((symbol.name, cname, sig))
 
     return library

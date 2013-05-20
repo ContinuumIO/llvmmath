@@ -8,6 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import ctypes.util
+from pprint import pprint
 from os.path import join, dirname
 import collections
 
@@ -24,7 +25,7 @@ class Library(object):
     def __init__(self):
         # # { func_name : { return_type, argtype) : link_obj } }
         self.symbols = collections.defaultdict(dict)
-        self.missing = []
+        self.missing = [] # (name, cname, sig)
 
     def add_symbol(self, name, sig, val):
         assert sig not in self.symbols[name], (sig, self.symbols)
@@ -56,6 +57,8 @@ openlibm = ctypes.CDLL(ctypes.util.find_library("openlibm"))
 olm_have_sym = lambda libm, cname: cname in openlibm_symbols
 openlibm_library = symbols.get_symbols(
     Library(), symbols.CtypesLib(openlibm, have_symbol=olm_have_sym))
+
+# pprint(openlibm_library.missing)
 
 # ______________________________________________________________________
 # NumPy umath
@@ -100,4 +103,4 @@ llvm_library = symbols.get_symbols(
 lmath = build.load_llvm_asm()
 math_library = symbols.get_symbols(LLVMLibrary(lmath),
                                    symbols.LLVMLib(lmath, mathcode_mangler))
-assert not math_library.missing, math_library.missing
+# assert not math_library.missing, math_library.missing
