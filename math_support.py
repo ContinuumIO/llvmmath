@@ -23,6 +23,7 @@ def _link_complex(engine, module, library, lfunc_src, lfunc_dst):
         %a1 = bitcast { double, double}* a to %struct.npy_cdouble*
         %r = sin(%struct.npy_cdouble* a)
     """
+    print("lingking complex...", lfunc_src, lfunc_dst)
     module, lsrc, ldst = module._ptr, lfunc_src._ptr, lfunc_dst._ptr
     argtypes = [arg.getType() for arg in ldst.getArgumentList()]
 
@@ -33,6 +34,7 @@ def _link_complex(engine, module, library, lfunc_src, lfunc_dst):
             builder.SetInsertPoint(callinst)
             args = [callinst.getOperand(i)
                         for i in range(callinst.getNumOperands())]
+            # Arguments passed by reference
             newargs = [builder.CreateBitCast(a, ty)
                            for a, ty in zip(args, argtypes)]
             newcall = builder.CreateCall(ldst, newargs)
@@ -41,6 +43,32 @@ def _link_complex(engine, module, library, lfunc_src, lfunc_dst):
 
     assert not lsrc.list_use(), map(str, lsrc.list_use())
     lsrc.eraseFromParent()
+
+def make_complex_wrapper(module, lfunc_src, lfunc_dst):
+    """
+    Create function wrapper for complex math call:
+
+        {f,f} sin({f,f} arg) -> sin({f,f}* arg, {f,f}* out)
+    """
+    assert lfunc_src.type.pointee.return_type == lfunc_src.args[0].type
+
+    argty = lfunc_src.args[0].type
+    dst_argty = lfunc_dst.args[0].type
+
+    fty = lc.Type.function(argty, [argty])
+    name = 'llvmmath.complexwrapper.%s' % (lfunc_src.name,)
+    lfunc = module.add_function(fty, name)
+
+    bb = lfunc.append_basic_block('entry')
+    b = lc.Builder.new(bb)
+
+    arg = b.alloca(argty, 'arg')
+    ret = b.alloca(argty, 'result')
+    b.store(lfunc.args[0], arg)
+    b.call(lfunc_dst, [b.bitcast(arg, dst_argty), b.bitcast(ret, dst_argty)])
+    b.ret(b.load(ret))
+
+    return lfunc
 
 # ______________________________________________________________________
 # Library linkers
@@ -60,7 +88,7 @@ class Linker(object):
 class LLVMLinker(Linker):
 
     def setup(self, engine, module, library):
-        module.link_in(library.module)
+        module.link_in(library.module, preserve=True)
 
     def link(self, engine, module, library, lfunc_src, lfunc_dst):
         "Link the math to an LLVM math library"
@@ -68,12 +96,13 @@ class LLVMLinker(Linker):
         v = lfunc_src._ptr
         if lfunc_src.type != lfunc_dst.type:
             if lfunc_dst.name.startswith('nc_'):
-                _link_complex(engine, module, library, lfunc_src, lfunc_dst)
+                # _link_complex(engine, module, library, lfunc_src, lfunc_dst)
+                lfunc_dst = make_complex_wrapper(module, lfunc_src, lfunc_dst)
             else:
                 raise ValueError("Incorrect signature for %s (got '%s', need '%s')" % (
                                     lfunc_src.name, lfunc_dst.type, lfunc_src.type))
-        else:
-            v.replaceAllUsesWith(lfunc_dst._ptr)
+
+        v.replaceAllUsesWith(lfunc_dst._ptr)
 
     def optimize(self, engine, module, library):
         "Try to eliminate unused functions"

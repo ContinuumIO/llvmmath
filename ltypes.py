@@ -23,6 +23,8 @@ integral  = (l_int, l_long, l_longlong)
 floating  = (l_float, l_double, l_longdouble)
 complexes = (l_complex64, l_complex128, l_complex256)
 
+all_types = integral + floating + complexes
+
 # ty = lambda name: mathcode_asm.get_global_variable_named(name).type
 # complexes = [ty('nc_if'), ty('nc_i'), ty('nc_il')]
 
