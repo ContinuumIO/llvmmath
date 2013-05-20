@@ -47,24 +47,27 @@ def make_complex_wrapper(module, lfunc_src, lfunc_dst):
     """
     Create function wrapper for complex math call:
 
-        {f,f} sin({f,f} arg) -> sin({f,f}* arg, {f,f}* out)
+        Create wrapper '{f,f} wrapsin({f,f} arg)' that calls
+        'void sin({f,f}* arg, {f,f}* out)'
     """
-    assert lfunc_src.type.pointee.return_type == lfunc_src.args[0].type
-
-    argty = lfunc_src.args[0].type
     dst_argty = lfunc_dst.args[0].type
 
-    fty = lc.Type.function(argty, [argty])
+    fty = lfunc_src.type.pointee
     name = 'llvmmath.complexwrapper.%s' % (lfunc_src.name,)
     lfunc = module.add_function(fty, name)
 
     bb = lfunc.append_basic_block('entry')
     b = lc.Builder.new(bb)
 
-    arg = b.alloca(argty, 'arg')
-    ret = b.alloca(argty, 'result')
-    b.store(lfunc.args[0], arg)
-    b.call(lfunc_dst, [b.bitcast(arg, dst_argty), b.bitcast(ret, dst_argty)])
+    ret = b.alloca(fty.return_type, 'result')
+
+    newargs = []
+    for arg in lfunc_src.args:
+        dstarg = b.alloca(arg.type, 'arg')
+        b.store(lfunc.args[0], dstarg)
+        newargs.append(b.bitcast(dstarg, dst_argty))
+
+    b.call(lfunc_dst, newargs + [b.bitcast(ret, dst_argty)])
     b.ret(b.load(ret))
 
     return lfunc
@@ -101,6 +104,7 @@ class LLVMLinker(Linker):
                 raise ValueError("Incorrect signature for %s (got '%s', need '%s')" % (
                                     lfunc_src.name, lfunc_dst.type, lfunc_src.type))
 
+        assert lfunc_dst.type == lfunc_src.type, (str(lfunc_dst.type), str(lfunc_src.type))
         v.replaceAllUsesWith(lfunc_dst._ptr)
 
     def optimize(self, engine, module, library):

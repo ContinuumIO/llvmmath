@@ -26,11 +26,16 @@ def make_llvm_context(name="mymodule"):
                                           fpm=False)
     return LLVMContext(engine, module, passmanagers.pm)
 
-def call_complex_byval(f, input):
+def build_complex_args(f, *inputs):
+    c_args = []
+    for c_argty, input in zip(f.argtypes, inputs):
+        c_args.append(c_argty(input.real, input.imag))
+    return c_args
+
+def call_complex_byval(f, *inputs):
     "Call unary complex function by value, e.g. complex func(complex)"
-    c_argty = f.argtypes[0]
-    c_input = c_argty(input.real, input.imag)
-    c_result = f(c_input)
+    c_args = build_complex_args(f, *inputs)
+    c_result = f(*c_args)
     return complex(c_result.e0, c_result.e1)
 
 def call_complex_byref(f, input):

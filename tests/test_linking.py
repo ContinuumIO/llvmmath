@@ -19,15 +19,17 @@ from llvm.ee import GenericValue
 
 sinname = 'my_custom_sin'
 cosname = 'my.custom.cos'
+powname = 'my.special.pow'
 
 namemap = {
     sinname: 'sin',
     cosname: 'cos',
+    powname: 'pow',
 }
 
 def all_replacements():
     replacements = {}
-    for name in (sinname, cosname):
+    for name in namemap:
         for ty in ltypes.all_types:
             replacements[name + str(ty)] = namemap[name]
 
@@ -55,14 +57,14 @@ def make_mod(ctx):
 
 # ______________________________________________________________________
 
-def make_func(ctx, defname, callname, ty):
-    fty = Type.function(ty, [ty])
+def make_func(ctx, defname, callname, ty, nargs=1):
+    fty = Type.function(ty, [ty]*nargs)
     f = ctx.module.add_function(fty, defname)
     bb = f.append_basic_block('entry')
     b = Builder.new(bb)
 
     lfunc = ctx.module.get_or_insert_function(fty, callname)
-    ret = b.call(lfunc, [f.args[0]])
+    ret = b.call(lfunc, f.args)
     b.ret(ret)
 
     return f
@@ -122,3 +124,17 @@ def test_link_complex():
 
     exp_result = [result] * 3
     assert np.allclose(our_result, exp_result), (our_result, exp_result)
+
+def test_link_binary():
+    ctx = new_ctx()
+    ty = ltypes.l_complex128
+    make_func(ctx, 'mypow', powname + str(ty), ty, nargs=2)
+    ctx.link()
+    m = make_mod(ctx)
+
+    inputs = 2+2j, 3+3j
+    result = test_support.call_complex_byval(m.mypow, *inputs)
+    expect = pow(*inputs)
+
+    print(result, expect)
+    assert result == expect
