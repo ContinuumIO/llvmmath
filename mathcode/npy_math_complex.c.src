@@ -1,4 +1,10 @@
 /*
+ * Taken from numpy/core/src/npymath/npy_math_complex.c.src
+ * date: 9/11/2012
+ * git hash: 75b8119f8145ab08a436ecfd7de868c6c6ba8f6d
+ */
+
+/*
  * Implement some C99-compatible complex math functions
  *
  * Most of the code is taken from the msun library in FreeBSD (HEAD @ 30th June

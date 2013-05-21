@@ -1,7 +1,10 @@
 /*
  * Taken from numpy/core/src/npymath/npy_math.c.src
- *
+ * date: 9/11/2012
+ * git hash: 75b8119f8145ab08a436ecfd7de868c6c6ba8f6d
+ */
 
+/*
  * vim:syntax=c
  * A small module to implement missing C99 math capabilities required by numpy
  *

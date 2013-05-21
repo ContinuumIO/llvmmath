@@ -137,4 +137,4 @@ def test_link_binary():
     expect = pow(*inputs)
 
     print(result, expect)
-    assert result == expect
+    assert result == expect, (result, expect)

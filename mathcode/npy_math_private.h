@@ -1,4 +1,10 @@
 /*
+ * Taken from numpy/core/src/npymath/npy_math_private.h
+ * date: 9/11/2012
+ * git hash: 75b8119f8145ab08a436ecfd7de868c6c6ba8f6d
+ */
+
+/*
  *
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
