@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Taken and adapted from numpy/core/src/umath/funcs.inc */
+/* Taken and adapted from numpy/core/src/umath/funcs.inc
  * date: 9/11/2012
  * git hash: 75b8119f8145ab08a436ecfd7de868c6c6ba8f6d
  */

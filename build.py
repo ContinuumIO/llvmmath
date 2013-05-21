@@ -10,6 +10,7 @@ import os
 import sys
 import logging
 from distutils import sysconfig
+from functools import partial
 from collections import namedtuple
 from os.path import join, dirname, abspath, exists
 from subprocess import check_call
@@ -70,12 +71,15 @@ def mkconfig(config, **override):
 def build(config=default_config):
     "Build the math library with Clang to bitcode and/or a shared library"
     config.log("Processing source files")
-    check_call([sys.executable, config.conv_templ,
-                join(mathcode, 'funcs.inc.src')])
-    check_call([sys.executable, config.conv_templ,
-                join(mathcode, 'npy_math_floating.c.src')])
-    check_call([sys.executable, config.conv_templ,
-                join(mathcode, 'npy_math_complex.c.src')])
+
+    args = [sys.executable, config.conv_templ]
+    process = lambda fn: check_call(args + [fn])
+    mkfn = partial(join, mathcode)
+
+    process(mkfn('funcs.inc.src'))
+    process(mkfn('npy_math_integer.c.src'))
+    process(mkfn('npy_math_floating.c.src'))
+    process(mkfn('npy_math_complex.c.src'))
 
     for build_target in config.targets:
         config.log("Building with target: %s" % build_target)
