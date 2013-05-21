@@ -1,49 +1,40 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import
 
-import types
 from functools import partial
 
-from .. import ltypes, llvm_support
+from .. import ltypes
 from . import test_support
 
 from llvm.core import *
-from llvm.ee import GenericValue
 
-def test_complex_abi():
-    # run_test(ltypes.l_complex64)  # This one breaks
-    run(ltypes.l_complex128)
-    # run_test(ltypes.l_complex256) # This one breaks
+# def test_complex_abi_byval():
+#     run_byval(ltypes.l_complex64)  # This one always breaks
+#     run_byval(ltypes.l_complex128) # This one breaks on some platforms
+#     run_byval(ltypes.l_complex256) # This one always breaks
 
-def run(ty):
-    engine, mod, pm = test_support.make_llvm_context()
-
-    lfunc = make_func(mod, ty)
-    print(mod)
-
-    pymod = types.ModuleType('wrapper')
-    llvm_support.wrap_llvm_function(lfunc, engine, pymod)
-    c_argty = pymod.wrapper.argtypes[0]
-    arg = c_argty(5.0, 6.0)
-    assert (arg.e0, arg.e1) == (5.0, 6.0)
-    result = pymod.wrapper(arg)
-    result_tup = (result.e0, result.e1)
-    assert result_tup == (10.0, 12.0), result_tup
-
-    # real = partial(GenericValue.real, ty.elements[0])
-    # struct = GenericValue.struct
-    # result = engine.run_function(lfunc, [struct([real(1.0), real(2.0)])])
-    # print(result)
+def test_complex_abi_byref():
+    run_byref(ltypes.l_complex64)
+    run_byref(ltypes.l_complex128)
+    run_byref(ltypes.l_complex256)
 
 # ______________________________________________________________________
 
-def make_func(mod, ty):
-    "def wrapper(x): return double(x)"
-    double = make_double_func(mod, ty)
-    lfunc, builder = make_complex_func(mod, ty, 'wrapper')
-    result = builder.call(double, [lfunc.args[0]])
-    builder.ret(result)
-    return lfunc
+def run(wrap, call_wrapped, ty):
+    engine, mod, pm = ctx = test_support.make_llvm_context()
+    double_func = make_double_func(mod, ty)
+    wrap(double_func, 'wrapper')
+
+    pymod = test_support.make_mod(ctx)
+    result = call_wrapped(pymod.wrapper, 5+6j)
+    assert result == 10+12j, result
+
+run_byval = partial(run, test_support.create_byval_wrapper,
+                    test_support.call_complex_byval)
+run_byref = partial(run, test_support.create_byref_wrapper,
+                    test_support.call_complex_byref)
+
+# ______________________________________________________________________
 
 def make_double_func(mod, ty):
     "def double(x): return complex(x.real + x.real, x.imag + x.imag)"

@@ -49,30 +49,27 @@ def new_ctx(lib=None, linker=None):
 
     link = partial(linking.link_llvm_math_intrinsics,
                    engine, mod, lib, linker, replacements)
-    return Ctx(engine, mod, pm, link)
+    def verify():
+        link()
+        mod.verify()
 
-def make_mod(ctx):
-    m = types.ModuleType('testmod')
-    llvm_support.wrap_llvm_module(ctx.module, ctx.engine, m)
-    return m
+    return Ctx(engine, mod, pm, verify)
 
 # ______________________________________________________________________
 
-def make_func(ctx, defname, callname, ty, nargs=1):
+def make_func(ctx, defname, callname, ty, nargs=1, byref=False):
     """
     Create an llvm function that calls an abstract math function. We
     use this to test linking, e.g. my_custom_sin(x) -> npy_sin(x)
     """
-    fty = Type.function(ty, [ty]*nargs)
-    f = ctx.module.add_function(fty, defname)
-    bb = f.append_basic_block('entry')
-    b = Builder.new(bb)
+    fty = Type.function(ty, [ty] * nargs)
+    wrapped = ctx.module.get_or_insert_function(fty, callname)
+    if byref:
+        wrap = test_support.create_byref_wrapper
+    else:
+        wrap = test_support.create_byval_wrapper
 
-    lfunc = ctx.module.get_or_insert_function(fty, callname)
-    ret = b.call(lfunc, f.args)
-    b.ret(ret)
-
-    return f
+    return wrap(wrapped, defname)
 
 #===------------------------------------------------------------------===
 # Tests
@@ -90,7 +87,7 @@ def test_link_real():
     # print(ctx.module)
     ctx.link()
 
-    m = make_mod(ctx)
+    m = test_support.make_mod(ctx)
     our_result = m.mysinf(10.0), m.mysin(10.0), m.mysinl(10.0)
     exp_result = [math.sin(10.0)] * 3
     assert np.allclose(our_result, exp_result)
@@ -98,7 +95,7 @@ def test_link_real():
 def test_link_complex():
     ctx = new_ctx()
     def mkfunc(defname, callname, ty):
-        return make_func(ctx, defname, callname + str(ty), ty)
+        return make_func(ctx, defname, callname + str(ty), ty, byref=True)
 
     # NOTE: we can't reliably call our function. TODO: pass by reference
     mkfunc('mycsinf', sinname, ltypes.l_complex64)
@@ -107,19 +104,21 @@ def test_link_complex():
 
     # print(ctx.module)
     ctx.link()
+    print(ctx.module)
 
-    m = make_mod(ctx)
+    m = test_support.make_mod(ctx)
     input = 10+2j
 
     result = cmath.sin(input)
+    call = test_support.call_complex_byref
 
-    our_result = (result, #test_support.call_complex_byval(m.mycsinf, input),
-                  test_support.call_complex_byval(m.mycsin,  input),
-                  result, #test_support.call_complex_byval(m.mycsinl, input)
-                  )
+    r1 = call(m.mycsinf, input)
+    r2 = call(m.mycsin,  input)
+    r3 = call(m.mycsinl, input)
 
-    exp_result = [result] * 3
-    assert np.allclose(our_result, exp_result), (our_result, exp_result)
+    print("expect:", result)
+    print("got:", r1, r2, r3)
+    assert np.allclose([result] * 3, [r1, r2, r3])
 
 # ______________________________________________________________________
 
@@ -128,7 +127,7 @@ def test_link_binary():
     ty = ltypes.l_complex128
     make_func(ctx, 'mypow', powname + str(ty), ty, nargs=2)
     ctx.link()
-    m = make_mod(ctx)
+    m = test_support.make_mod(ctx)
 
     inputs = 2+2j, 3+3j
     result = test_support.call_complex_byval(m.mypow, *inputs)
@@ -141,3 +140,6 @@ def test_link_binary():
 
 def test_link_external():
     ctx = new_ctx()
+
+test_link_real()
+test_link_complex()

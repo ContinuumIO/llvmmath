@@ -6,9 +6,13 @@ Some test helpers.
 
 from __future__ import print_function, division, absolute_import
 
+import types
 import ctypes
 import collections
 
+from .. import llvm_support
+
+import llvm
 import llvm.core as lc
 import llvm.passes as lp
 import llvm.ee as le
@@ -25,6 +29,15 @@ def make_llvm_context(name="mymodule"):
                                           inline_threshold=1000,
                                           fpm=False)
     return LLVMContext(engine, module, passmanagers.pm)
+
+def make_mod(ctx):
+    m = types.ModuleType('testmod')
+    llvm_support.wrap_llvm_module(ctx.module, ctx.engine, m)
+    return m
+
+#===------------------------------------------------------------------===
+# Call complex functions
+#===------------------------------------------------------------------===
 
 def build_complex_args(f, *inputs):
     c_args = []
@@ -63,3 +76,49 @@ def call_complex_byval_return(f, input):
     c_input = c_argty(input.real, input.imag)
     c_result = f(ctypes.pointer(c_input))
     return c_result
+
+#===------------------------------------------------------------------===
+# Function wrapping
+#===------------------------------------------------------------------===
+
+def _have_func(mod, name):
+    try:
+        mod.get_function_named(name)
+        return True
+    except llvm.LLVMException:
+        return False
+
+def create_byref_wrapper(wrapped, name):
+    """
+    Create an llvm function wrapper that takes arguments by reference, since
+    LLVM and C disagree on the ABI for struct (and long double?) types.
+    """
+    mod = wrapped.module
+    wfty = wrapped.type.pointee
+    assert not _have_func(mod, name)
+
+    argtys = map(lc.Type.pointer, wfty.args + [wfty.return_type])
+    fty = lc.Type.function(lc.Type.void(), argtys)
+
+    f = mod.add_function(fty, name)
+    bb = f.append_basic_block('entry')
+    b = lc.Builder.new(bb)
+
+    ret = b.call(wrapped, map(b.load, f.args[:-1]))
+    b.store(ret, f.args[-1])
+    b.ret_void()
+    return f
+
+def create_byval_wrapper(wrapped, name):
+    """
+    Create a simple function wrapper for testing.
+    """
+    mod = wrapped.module
+    assert not _have_func(mod, name)
+
+    f = mod.add_function(wrapped.type.pointee, name)
+    bb = f.append_basic_block('entry')
+    b = lc.Builder.new(bb)
+    ret = b.call(wrapped, f.args)
+    b.ret(ret)
+    return f

@@ -78,7 +78,7 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
         else:
             struct_type = None
 
-        if struct_type and issubclass(struct_type, ctypes.Structure):
+        if struct_type is not None and issubclass(struct_type, ctypes.Structure):
             return struct_type
 
         # If there is an object with the name of the structure already present and it has
