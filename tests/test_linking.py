@@ -112,6 +112,12 @@ def test_link_complex():
     result = cmath.sin(input)
     call = test_support.call_complex_byref
 
+    firstfield = lambda f: f.argtypes[0]._type_._fields_[0]
+    typeof = lambda f: firstfield(f)[1]
+    assert typeof(m.mycsinf) == ctypes.c_float
+    assert typeof(m.mycsin) == ctypes.c_double
+    assert typeof(m.mycsinl) in (ctypes.c_double, ctypes.c_longdouble)
+
     r1 = call(m.mycsinf, input)
     r2 = call(m.mycsin,  input)
     r3 = call(m.mycsinl, input)
@@ -141,5 +147,5 @@ def test_link_binary():
 def test_link_external():
     ctx = new_ctx()
 
-test_link_real()
+# test_link_real()
 test_link_complex()

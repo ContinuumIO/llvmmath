@@ -73,7 +73,7 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
                 struct_name = struct_name.encode('ascii')
 
         # If the named type is already known, return it
-        if py_module:
+        if py_module and struct_name:
             struct_type = getattr(py_module, struct_name, None)
         else:
             struct_type = None
