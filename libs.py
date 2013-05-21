@@ -83,10 +83,8 @@ def mathcode_mangler(name, sig):
     ty = sig.argtypes[0]
     if name == 'abs':
         absname = naming.absname(ty)
-        if ty.kind == llvm.core.TYPE_INTEGER:
-            return absname # abs(), labs(), llabs()
-        elif ltypes.is_float(ty):
-            return 'npy_' + absname
+        if ty.kind == llvm.core.TYPE_INTEGER or ltypes.is_float(ty):
+            return 'npy_' + absname # abs(), labs(), llabs()
         else:
             return 'nc_' + absname
     elif ty.kind == llvm.core.TYPE_STRUCT:
