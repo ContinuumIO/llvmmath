@@ -8,57 +8,84 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import sys
+import logging
 from distutils import sysconfig
-from os.path import join, dirname, abspath
+from collections import namedtuple
+from os.path import join, dirname, abspath, exists
 from subprocess import check_call
 
 import llvm.core
 import numpy as np
 
-_configs = { 'win': '.dll', 'dar': '.so', 'default': ".so", }
+logger = logging.getLogger(__name__)
+
+# ______________________________________________________________________
+
+_shared_endings = { 'win': '.dll', 'dar': '.so', 'default': ".so", }
 
 def find_shared_ending():
-    return _configs.get(sys.platform[:3], _configs['default'])
+    return _shared_endings.get(sys.platform[:3], _shared_endings['default'])
 
 root = dirname(__file__)
 mathcode = join(root, 'mathcode')
 shared_ending = find_shared_ending()
 
-default_config = {
-    'CLANG':      'clang',
-    'CONV_TEMPL': join(root, 'generator', 'conv_template.py'),
-    # 'OUTPUT':     'shared',
-    'OUTPUT':     'bitcode',
-}
-
 incdirs = [np.get_include(), sysconfig.get_python_inc(), join(mathcode, 'private')]
 includes = ['-I' + abspath(dir) for dir in incdirs]
 
+# ______________________________________________________________________
+# Build targets
+
+def build_bitcode(config):
+    "Compile math library to bitcode with clang"
+    check_call([config.clang, '-O3', '-march=native',
+                '-c', 'mathcode.c', '-S', '-emit-llvm'] + includes, cwd=mathcode)
+
+def build_shared(config):
+    "Compile math library to a shared library with clang"
+    check_call([config.clang, '-O3', '-march=native',
+                '-c', 'mathcode.c', '-fPIC'] + includes, cwd=mathcode)
+    check_call([config.clang, '-shared', 'mathcode.o',
+                '-o', 'mathcode' + shared_ending], cwd=mathcode)
+
+# ______________________________________________________________________
+# Config
+
+Config = namedtuple('Config', ['clang', 'conv_templ', 'targets', 'log'])
+
+_default_values = {
+    'clang':      'clang',
+    'conv_templ': join(root, 'generator', 'conv_template.py'),
+    'targets':    [build_bitcode, build_shared],
+    'log':        logger.info,
+}
+
+default_config = Config(**_default_values)
+
+def mkconfig(config, **override):
+    return Config(**dict(zip(config._fields, config), **override))
+
+# ______________________________________________________________________
+
 def build(config=default_config):
-    # Process .*.src files
-    check_call([sys.executable, config['CONV_TEMPL'],
+    "Build the math library with Clang to bitcode and/or a shared library"
+    config.log("Processing source files")
+    check_call([sys.executable, config.conv_templ,
                 join(mathcode, 'funcs.inc.src')])
-    check_call([sys.executable, config['CONV_TEMPL'],
+    check_call([sys.executable, config.conv_templ,
                 join(mathcode, 'npy_math_floating.c.src')])
-    check_call([sys.executable, config['CONV_TEMPL'],
+    check_call([sys.executable, config.conv_templ,
                 join(mathcode, 'npy_math_complex.c.src')])
 
-    bitcode = config['OUTPUT'] == 'bitcode'
-    if bitcode:
-        args = ['-S', '-emit-llvm']
-    else:
-        args = ['-fPIC']
-
-    # Compile to bitcode with clang
-    check_call([config['CLANG'], '-O3', '-march=native',
-                '-c', 'mathcode.c'] + args + includes, cwd=mathcode)
-
-    if not bitcode:
-        check_call([config['CLANG'], '-shared', 'mathcode.o',
-                    '-o', 'mathcode' + shared_ending], cwd=mathcode)
+    for build_target in config.targets:
+        config.log("Building with target: %s" % build_target)
+        build_target(config)
 
 def load_llvm_asm():
+    "Load the math library as an LLVM module"
     bc = join(root, 'mathcode', 'mathcode.s')
+    if not exists(bc):
+        build(mkconfig(default_config, targets=[build_bitcode]))
     return llvm.core.Module.from_assembly(open(bc))
 
 #------------------------------------------------------------------------
