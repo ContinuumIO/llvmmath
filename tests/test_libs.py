@@ -74,7 +74,7 @@ def run_from_types(library, libm, types):
                 run(libm, name, sig, dtype)
 
 def test_llvm_library():
-    lib = libs.math_library
+    lib = libs.get_mathlib_bc()
     assert not lib.missing, lib.missing
 
     engine, module, pm = test_support.make_llvm_context()
@@ -86,5 +86,3 @@ def test_llvm_library():
     # run_int_tests(libm)
     run_from_types(lib, libm, ltypes.floating)
     run_from_types(lib, libm, ltypes.complexes)
-
-test_llvm_library()

@@ -49,29 +49,13 @@ def run(library):
             assert ptr is not None, (funcname, str(ty))
             _run(ty, ty, funcname, ptr)
 
-def print_pointers():
-    def p(d):
-        for k, v in sorted(d.items()):
-            print(k[1], hex(v))
-    print("open")
-    p(linking.openlibm_library['atanh'])
-    print("libm")
-    p(linking.libm_library['atanh'])
-    print("umath")
-    p(linking.umath_library['atanh'])
 
 if __name__ == '__main__':
-    print("llvm lib")
-    run(libs.llvm_library)
-    print()
+    libs = [libs.get_mathlib_so(), libs.get_umath(),
+            libs.get_openlibm(), libs.get_libm()]
+    names = ["mathcode/", "umath", "openlibm", "libm"]
 
-    print("umath")
-    run(libs.umath_library)
-    print()
-
-    print("openlibm")
-    run(libs.openlibm_library)
-    print()
-
-    print("libm")
-    run(libs.libm_library)
+    for lib, name in zip(libs, names):
+        print(name)
+        run(lib)
+        print()

@@ -92,9 +92,9 @@ def load_llvm_asm():
         build(mkconfig(default_config, targets=[build_bitcode]))
     return llvm.core.Module.from_assembly(open(bc))
 
-#------------------------------------------------------------------------
+#===------------------------------------------------------------------===
 # Generate numpy config.h -- numpy/core/setup.py:generate_config_h
-#------------------------------------------------------------------------
+#===------------------------------------------------------------------===
 
 from distutils.dep_util import newer
 

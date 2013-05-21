@@ -47,38 +47,26 @@ class LLVMLibrary(Library):
         super(LLVMLibrary, self).__init__()
         self.module = module # LLVM math module
 
-# ______________________________________________________________________
-# openlibm
+#===------------------------------------------------------------------===
+# Helpers
+#===------------------------------------------------------------------===
 
-# print("---------- OPENLIBM -----------")
-symbol_data = open(os.path.join(os.path.dirname(__file__), "Symbol.map")).read()
-openlibm_symbols = set(word.rstrip(';') for word in symbol_data.split())
-openlibm = ctypes.CDLL(ctypes.util.find_library("openlibm"))
-olm_have_sym = lambda libm, cname: cname in openlibm_symbols
-openlibm_library = symbols.get_symbols(
-    Library(), symbols.CtypesLib(openlibm, have_symbol=olm_have_sym))
+def _cached(f):
+    result = []
+    def wrapper(*args, **kwargs):
+        if len(result) == 0:
+            ret = f(*args, **kwargs)
+            result.append(ret)
 
-# pprint(openlibm_library.missing)
+        return result[0]
+    return wrapper
 
-# ______________________________________________________________________
-# NumPy umath
+#===------------------------------------------------------------------===
+# Math symbol manglers
+#===------------------------------------------------------------------===
 
-# print("---------- umath -----------")
-umath = ctypes.CDLL(numpy.core.umath.__file__)
 umath_mangler = lambda name, ty: 'npy_' + naming.mathname(name, ty)
-umath_library = symbols.get_symbols(
-    Library(), symbols.CtypesLib(umath, mangler=umath_mangler))
 
-# ______________________________________________________________________
-# System's libmath
-
-# print("---------- libm -----------")
-libm = ctypes.CDLL(ctypes.util.find_library("m"))
-libm_library = symbols.get_symbols(Library(), symbols.CtypesLib(libm))
-
-# ______________________________________________________________________
-
-# print("---------- mathcode -----------")
 def mathcode_mangler(name, sig):
     ty = sig.argtypes[0]
     if name == 'abs':
@@ -92,13 +80,46 @@ def mathcode_mangler(name, sig):
     else:
         return umath_mangler(name, sig)
 
-dylib = 'mathcode' + build.find_shared_ending()
-llvmmath = ctypes.CDLL(join(root, 'mathcode', dylib))
-llvm_library = symbols.get_symbols(
-    Library(), symbols.CtypesLib(llvmmath, mathcode_mangler))
+#===------------------------------------------------------------------===
+# Public Interface
+#===------------------------------------------------------------------===
 
-# Load llvmmath as bitcode
-lmath = build.load_llvm_asm()
-math_library = symbols.get_symbols(LLVMLibrary(lmath),
-                                   symbols.LLVMLib(lmath, mathcode_mangler))
-# assert not math_library.missing, math_library.missing
+@_cached
+def get_libm():
+    "Get a math library from the system's libm"
+    libm = ctypes.CDLL(ctypes.util.find_library("m"))
+    return symbols.get_symbols(Library(), symbols.CtypesLib(libm))
+
+@_cached
+def get_umath():
+    "Load numpy's umath as a math library"
+    umath = ctypes.CDLL(numpy.core.umath.__file__)
+    umath_library = symbols.get_symbols(
+        Library(), symbols.CtypesLib(umath, mangler=umath_mangler))
+    return umath_library
+
+@_cached
+def get_openlibm():
+    "Load openlibm from its shared library"
+    symbol_data = open(os.path.join(os.path.dirname(__file__), "Symbol.map")).read()
+    openlibm_symbols = set(word.rstrip(';') for word in symbol_data.split())
+    openlibm = ctypes.CDLL(ctypes.util.find_library("openlibm"))
+    olm_have_sym = lambda libm, cname: cname in openlibm_symbols
+    openlibm_library = symbols.get_symbols(
+        Library(), symbols.CtypesLib(openlibm, have_symbol=olm_have_sym))
+    return openlibm_library
+
+@_cached
+def get_mathlib_so():
+    "Load the math from mathcode/ from a shared library"
+    dylib = 'mathcode' + build.find_shared_ending()
+    llvmmath = ctypes.CDLL(join(root, 'mathcode', dylib))
+    llvm_library = symbols.get_symbols(
+        Library(), symbols.CtypesLib(llvmmath, mathcode_mangler))
+    return llvm_library
+
+def get_mathlib_bc():
+    "Load the math from mathcode/ from clang-compiled bitcode"
+    lmath = build.load_llvm_asm()
+    return symbols.get_symbols(LLVMLibrary(lmath),
+                               symbols.LLVMLib(lmath, mathcode_mangler))
