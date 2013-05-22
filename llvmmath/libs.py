@@ -12,7 +12,7 @@ from pprint import pprint
 from os.path import join, dirname
 import collections
 
-from numba.support.math_support import symbols, build, ltypes, naming
+from . import symbols, build, ltypes, naming
 
 import llvm.core
 import numpy.core.umath

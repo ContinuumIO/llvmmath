@@ -10,13 +10,14 @@ import time
 import ctypes
 
 from numba import *
-from numba.support import ctypes_support
-from numba.support.math_support import symbols, linking, libs, llvm_support
+from . import symbols, linking, libs, llvm_support
 
 import numpy as np
 
 N = 10000
 SIZE = 1024
+
+assert False, "Update"
 
 def _run(restype, argtype, funcname, ptr):
     crestype = llvm_support.map_llvm_to_ctypes(restype)

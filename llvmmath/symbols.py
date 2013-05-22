@@ -9,7 +9,6 @@ from __future__ import print_function, division, absolute_import
 from os.path import abspath, dirname, join
 import ctypes
 
-from numba import *
 from . import ltypes, parsesyms, naming
 from llvm.core import *
 

@@ -7,8 +7,8 @@ from functools import partial
 import llvm.core as lc
 import numpy as np
 
-from numba.support.math_support import ltypes, libs, llvm_support, symbols
-from numba.support.math_support.tests import test_support
+from .. import ltypes, libs, llvm_support, symbols
+from . import test_support
 
 # ______________________________________________________________________
 

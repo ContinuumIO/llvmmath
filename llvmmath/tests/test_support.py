@@ -21,7 +21,7 @@ LLVMContext = collections.namedtuple("LLVMContext", "engine module pm")
 
 def make_llvm_context(name="mymodule"):
     "Return an LLVM context (engine, module, passmanager)"
-    module = lc.Module.new("numba_executable_module")
+    module = lc.Module.new("executable_module")
     features = '-avx'
     tm = le.TargetMachine.new(opt=3, cm=le.CM_JITDEFAULT, features=features)
     engine = le.EngineBuilder.new(module).create(tm)
