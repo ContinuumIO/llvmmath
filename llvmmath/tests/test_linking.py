@@ -111,6 +111,7 @@ def test_link_complex(ctx):
     ctx.mkbyref('mycsinf', sinname, ltypes.l_complex64)
     ctx.mkbyref('mycsin',  sinname, ltypes.l_complex128)
     ctx.mkbyref('mycsinl', sinname, ltypes.l_complex256)
+    # print(ctx.module)
     ctx.link()
     print(ctx.module)
 
@@ -145,9 +146,6 @@ def test_link_binary(ctx):
 
     assert list(map(_base_type, m.mypow.argtypes)) == [ctypes.c_double] * 3
     assert m.mypow.restype is None
-    print("---")
-    print(m.mypow.argtypes)
-    print("---")
 
     inputs = 2+2j, 3+3j
     result = support.call_complex_byref(m.mypow, *inputs)
@@ -162,6 +160,5 @@ def test_link_binary(ctx):
 def test_link_external(ctx):
     pass
 
-# ctx, = make_contexts()[0]
-# print("..")
+# ctx, = make_contexts()[1]
 # test_link_complex(ctx)

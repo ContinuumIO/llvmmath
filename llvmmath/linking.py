@@ -6,6 +6,7 @@ Support for math as a postpass on LLVM IR.
 
 from __future__ import print_function, division, absolute_import
 
+from . import libs
 from . import ltypes
 from . import complex_support
 
@@ -163,14 +164,25 @@ class ExternalLibraryLinker(Linker):
 
 # ______________________________________________________________________
 
+def get_linker(lib):
+    "Get linker for the given math library"
+    if isinstance(lib, libs.LLVMLibrary):
+        return LLVMLinker()
+    else:
+        return ExternalLibraryLinker()
+
 def link_llvm_math_intrinsics(engine, module, library, linker, replacements):
     """
     Link all abstract math calls by adding a runtime address or by replacing
     callsites with a different LLVM function.
 
-    :param library: math_support.Library of math symbols
-    :param link: link function (e.g. link_pointer)
+    :param engine: llvm execution engine
+    :param module: llvm module containing math calls
+    :param library: ``llvmmath.math_support.Library`` of math symbols
+    :param linker: linker that can link the math library
+    :type linker: ``llvmmath.linking.Linker``
     :param replacements: { abstract_math_name -> math_name }
+    :type replacements: dict of str -> str
     """
     linker.setup(engine, module, library)
 

@@ -23,7 +23,7 @@ root = dirname(__file__)
 
 class Library(object):
     def __init__(self):
-        # # { func_name : { return_type, argtype) : link_obj } }
+        # # { func_name : { signature : link_obj } }
         self.symbols = collections.defaultdict(dict)
         self.missing = [] # (name, cname, sig)
 
@@ -34,18 +34,27 @@ class Library(object):
     def get_symbol(self, name, signature):
         return self.symbols.get(name, {}).get(signature)
 
+    def format_linkable(self, linkable):
+        return hex(linkable)
+
     def __str__(self):
         result = []
         for symbol, d in sorted(self.symbols.iteritems()):
             for (rty, argtys), linkable in d.iteritems():
+                linkable_str = self.format_linkable(linkable)
                 result.append("%s %s(%s): %s" % (
-                    rty, symbol, ", ".join(map(str, argtys)), linkable))
-        return "Library(\n%s)" % "\n    ".join(result)
+                    rty, symbol, ", ".join(map(str, argtys)), linkable_str))
+
+        sep = "\n    "
+        return "Library(%s%s)" % (sep, sep.join(result))
 
 class LLVMLibrary(Library):
     def __init__(self, module):
         super(LLVMLibrary, self).__init__()
         self.module = module # LLVM math module
+
+    def format_linkable(self, linkable):
+        return linkable.name
 
 #===------------------------------------------------------------------===
 # Helpers
