@@ -130,7 +130,7 @@ def get_mathlib_bc():
 
 def get_default_math_lib():
     "Get the default math library implementation"
-    if build.have_bitcode():
+    if build.have_llvm_asm():
         return get_mathlib_bc()
     else:
         return get_mathlib_so()

@@ -7,7 +7,7 @@ from functools import partial
 import math
 import cmath
 
-from .. import ltypes, llvm_support, linking, libs, have_bitcode
+from .. import ltypes, llvm_support, linking, libs, have_llvm_asm
 from nose_parameterized import parameterized
 from . import support
 
@@ -63,7 +63,7 @@ def make_contexts():
     ctx1 = new_ctx(lib=so, linker=so_linker)
     contexts = [(ctx1,)]
 
-    if have_bitcode():
+    if have_llvm_asm():
         asm = libs.get_mathlib_bc()
         asm_linker = linking.LLVMLinker()
         ctx2 = new_ctx(lib=asm, linker=asm_linker)

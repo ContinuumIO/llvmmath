@@ -96,8 +96,8 @@ def build_targets(config=default_config):
 
 bitcode_fn = join(root, 'mathcode', 'mathcode.s')
 
-def have_bitcode():
-    "See whether we have compiled bitcode available"
+def have_llvm_asm():
+    "See whether we have compiled llvm assembly available"
     return exists(bitcode_fn)
 
 def have_clang():
