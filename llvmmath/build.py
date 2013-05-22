@@ -57,7 +57,7 @@ Config = namedtuple('Config', ['clang', 'conv_templ', 'targets', 'log'])
 _default_values = {
     'clang':      'clang',
     'conv_templ': join(root, 'generator', 'conv_template.py'),
-    'targets':    [build_bitcode, build_shared],
+    'targets':    [build_bitcode], #, build_shared],
     'log':        logger.info,
 }
 

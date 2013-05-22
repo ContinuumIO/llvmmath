@@ -1,1 +1,1 @@
-# from .libs import openlibm_library, umath_library, libm_library, math_library
+__version__ = '0.1'
