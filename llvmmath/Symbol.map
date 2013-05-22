@@ -1,3 +1,7 @@
+/* OpenLIBM Symbol.map:
+ * githash: 740f901b48a31e81622e75d3179f7be7c05be15d
+ */
+
 /*
  * $FreeBSD: src/lib/msun/Symbol.map,v 1.30 2011/10/17 05:41:03 das Exp $
  */
