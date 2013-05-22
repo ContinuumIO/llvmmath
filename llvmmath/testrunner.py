@@ -14,8 +14,11 @@ from __future__ import print_function, division, absolute_import
 import os, sys
 import numpy
 
+from nose.tools import nottest
+
 from llvmmath import __version__
 
+@nottest
 def test(verbosity=1, xunitfile=None, exit=False):
     """
     Runs the full numba test suite, outputing
