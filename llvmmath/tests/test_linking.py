@@ -106,7 +106,7 @@ def test_link_real(ctx):
 def _base_type(ty):
     return ty._type_._fields_[0][1] # Get the base type of a complex *
 
-# @parameterized(make_contexts())
+@parameterized(make_contexts())
 def test_link_complex(ctx):
     ctx.mkbyref('mycsinf', sinname, ltypes.l_complex64)
     ctx.mkbyref('mycsin',  sinname, ltypes.l_complex128)
@@ -162,6 +162,6 @@ def test_link_binary(ctx):
 def test_link_external(ctx):
     pass
 
-ctx, = make_contexts()[0]
-print("..")
-test_link_complex(ctx)
+# ctx, = make_contexts()[0]
+# print("..")
+# test_link_complex(ctx)

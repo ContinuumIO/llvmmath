@@ -70,3 +70,37 @@ def create_byref_wrapper(wrapped, name):
     b.store(ret, f.args[-1])
     b.ret_void()
     return f
+
+def create_val2ref_wrapper(wrapped, name, func_ty):
+    """
+    Create function wrapper for complex math call. Take arguments by
+    value and call 'wrapped' by reference.
+
+    :param wrapped: function to call
+    :param name: name of the wrapper
+    :param func_ty: type of the wrapper. Argument pointers are bitcast to
+                    wrapped.type
+    """
+    mod = wrapped.module
+
+    dst_fty = wrapped.type.pointee
+    dst_argtys = dst_fty.args[:-1]
+    dst_retty = dst_fty.args[-1]
+
+    lfunc = mod.add_function(func_ty, name)
+
+    bb = lfunc.append_basic_block('entry')
+    b = lc.Builder.new(bb)
+
+    ret = b.alloca(func_ty.return_type, 'result')
+
+    newargs = []
+    for arg, dst_argty in zip(lfunc.args, dst_argtys):
+        dstarg = b.alloca(arg.type, 'arg')
+        b.store(arg, dstarg)
+        newargs.append(b.bitcast(dstarg, dst_argty))
+
+    b.call(wrapped, newargs + [b.bitcast(ret, dst_retty)])
+    b.ret(b.load(ret))
+
+    return lfunc

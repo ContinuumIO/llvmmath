@@ -7,6 +7,7 @@ Support for math as a postpass on LLVM IR.
 from __future__ import print_function, division, absolute_import
 
 from . import ltypes
+from . import complex_support
 
 import llvm.core as lc
 import llvm.passes as lp
@@ -14,6 +15,10 @@ import llvm.ee as le
 from llvmpy.api import llvm
 
 llvm_context = llvm.getGlobalContext()
+
+#===------------------------------------------------------------------===
+# Complex linking
+#===------------------------------------------------------------------===
 
 def _link_complex(engine, module, library, lfunc_src, lfunc_dst):
     """
@@ -43,39 +48,68 @@ def _link_complex(engine, module, library, lfunc_src, lfunc_dst):
     assert not lsrc.list_use(), map(str, lsrc.list_use())
     lsrc.eraseFromParent()
 
-def make_complex_wrapper(module, lfunc_src, lfunc_dst):
-    """
-    Create function wrapper for complex math call:
-
-        Create wrapper '{f,f} wrapsin({f,f} arg)' that calls
-        'void sin({f,f}* arg, {f,f}* out)'
-    """
-    dst_fty = lfunc_dst.type.pointee
-    dst_argtys = dst_fty.args[:-1]
-    dst_retty = dst_fty.args[-1]
-
-    fty = lfunc_src.type.pointee
-    name = 'llvmmath.complexwrapper.%s' % (lfunc_src.name,)
-    lfunc = module.add_function(fty, name)
-
-    bb = lfunc.append_basic_block('entry')
-    b = lc.Builder.new(bb)
-
-    ret = b.alloca(fty.return_type, 'result')
-
-    newargs = []
-    for arg, dst_argty in zip(lfunc.args, dst_argtys):
-        dstarg = b.alloca(arg.type, 'arg')
-        b.store(arg, dstarg)
-        newargs.append(b.bitcast(dstarg, dst_argty))
-
-    b.call(lfunc_dst, newargs + [b.bitcast(ret, dst_retty)])
-    b.ret(b.load(ret))
-
-    return lfunc
-
 # ______________________________________________________________________
+
+def link_complex_llvm(lfunc_dst, lfunc_src):
+    """
+    Link a complex math function called by value to an LLVM implementation
+    taking arguments by reference.
+
+        complex sin(complex) -> complex wrapper_sin(complex)
+
+    where
+
+        complex wrapper_sin(complex arg) {
+            complex out; nc_sin(&arg, &out); return out;
+        }
+
+    nc_sin needs to have been linked into the module.
+    """
+    if lfunc_dst.name.startswith('nc_'):
+        name = 'llvmmath.complexwrapper.%s' % (lfunc_src.name,)
+        lfunc_dst = complex_support.create_val2ref_wrapper(
+            lfunc_dst, name, lfunc_src.type.pointee)
+    else:
+        raise ValueError(
+            "Incorrect signature for %s (got '%s', need '%s')" % (
+                lfunc_src.name, lfunc_dst.type, lfunc_src.type))
+
+    lfunc_src._ptr.replaceAllUsesWith(lfunc_dst._ptr)
+
+def link_complex_external(lfunc, module):
+    """
+    Link a complex math function called by value to an external implementation
+    taking arguments by reference. Returns a function declaration for the
+    external function, which needs an address assigned (add_global_mapping).
+
+        complex sin(complex) -> complex wrapper_sin(complex)
+
+    where
+
+        complex wrapper_sin(complex arg) {
+            complex out; nc_sin(&arg, &out); return out;
+        }
+
+    Returns nc_sin, which needs an external address.
+    """
+    fty = lfunc.type.pointee
+
+    name = 'llvmmath.external.%s' % (lfunc.name,)
+    wrapper_name = 'llvmmath.externalwrap.%s' % (lfunc.name,)
+
+    argtys = map(lc.Type.pointer, fty.args + [fty.return_type])
+    reffty = lc.Type.function(lc.Type.void(), argtys)
+    wrapped = module.add_function(reffty, name)
+
+    lfunc_wrapper = complex_support.create_val2ref_wrapper(
+        wrapped, wrapper_name, lfunc.type.pointee)
+
+    lfunc._ptr.replaceAllUsesWith(lfunc_wrapper._ptr)
+    return wrapped
+
+#===------------------------------------------------------------------===
 # Library linkers
+#===------------------------------------------------------------------===
 
 class Linker(object):
     "Link math functions into a destination module"
@@ -99,15 +133,9 @@ class LLVMLinker(Linker):
         lfunc_dst = module.get_function_named(lfunc_dst.name)
         v = lfunc_src._ptr
         if lfunc_src.type != lfunc_dst.type:
-            if lfunc_dst.name.startswith('nc_'):
-                # _link_complex(engine, module, library, lfunc_src, lfunc_dst)
-                lfunc_dst = make_complex_wrapper(module, lfunc_src, lfunc_dst)
-            else:
-                raise ValueError("Incorrect signature for %s (got '%s', need '%s')" % (
-                                    lfunc_src.name, lfunc_dst.type, lfunc_src.type))
-
-        assert lfunc_dst.type == lfunc_src.type, (str(lfunc_dst.type), str(lfunc_src.type))
-        v.replaceAllUsesWith(lfunc_dst._ptr)
+            lfunc_dst = link_complex_llvm(lfunc_dst, lfunc_src)
+        else:
+            v.replaceAllUsesWith(lfunc_dst._ptr)
 
     def optimize(self, engine, module, library):
         "Try to eliminate unused functions"
@@ -128,6 +156,9 @@ class ExternalLibraryLinker(Linker):
     def link(self, engine, module, library, lfunc, ptr):
         "Link the math by adding pointers to functions in external code"
         is_complex = lfunc.type.pointee.return_type.kind == lc.TYPE_STRUCT
+        if is_complex:
+            lfunc = link_complex_external(lfunc, module)
+
         engine.add_global_mapping(lfunc, ptr)
 
 # ______________________________________________________________________
