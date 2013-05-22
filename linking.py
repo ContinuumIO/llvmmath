@@ -68,9 +68,8 @@ def make_complex_wrapper(module, lfunc_src, lfunc_dst):
         dstarg = b.alloca(arg.type, 'arg')
         b.store(arg, dstarg)
         newargs.append(b.bitcast(dstarg, dst_argty))
-    print(".........", ret, dst_retty)
+
     b.call(lfunc_dst, newargs + [b.bitcast(ret, dst_retty)])
-    print("...")
     b.ret(b.load(ret))
 
     return lfunc
@@ -112,9 +111,12 @@ class LLVMLinker(Linker):
 
     def optimize(self, engine, module, library):
         "Try to eliminate unused functions"
-        # for lfunc_math in library.module.functions:
-        #     lfunc = module.get_function_named(lfunc_math.name)
-        #     lfunc.linkage = lc.LINKAGE_INTERNAL
+        for lfunc_math in library.module.functions:
+            lfunc = module.get_function_named(lfunc_math.name)
+            # lfunc.linkage = lc.LINKAGE_INTERNAL
+            if not lfunc.uses:
+                # global_val = module.get_global_variable_named(lfunc_math.name)
+                lfunc.delete()
         #
         # fpm = lp.PassManager.new()
         # fpm.add(lp.PASS_GLOBALDCE)

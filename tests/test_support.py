@@ -85,10 +85,12 @@ def call_complex_byref(f, *inputs):
 
     c_args = build_complex_args([pty._type_ for pty in f.argtypes], *inputs)
     c_args.append(c_result)
+    c_args = map(ctypes.pointer, c_args)
 
-    # Without this it doesn't work?
-    assert ctypes.POINTER(f.argtypes[0]._type_) == f.argtypes[0]
-    f.argtypes = [type(c_arg) for c_arg in c_args]
+    # What? ArgumentError: argument 3: <type 'exceptions.TypeError'>: expected
+    # LP_ instance instead of LP_
+    f.argtypes = [type(a) for a in c_args]
+    # -- end hack
 
     f(*c_args)
 
@@ -131,7 +133,7 @@ def create_byref_wrapper(wrapped, name):
     b = lc.Builder.new(bb)
 
     args = list(map(b.load, f.args[:-1]))
-    print_complex(mod, b, *args)
+    # print_complex(mod, b, *args)
     ret = b.call(wrapped, args)
     b.store(ret, f.args[-1])
     b.ret_void()

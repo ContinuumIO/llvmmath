@@ -27,11 +27,13 @@ namemap = {
     powname: 'pow',
 }
 
+mkname = lambda name, ty: '%s%d' % (name, ltypes.all_types.index(ty))
+
 def all_replacements():
     replacements = {}
     for name in namemap:
         for ty in ltypes.all_types:
-            replacements[name + str(ty)] = namemap[name]
+            replacements[mkname(name, ty)] = namemap[name]
 
     return replacements
 
@@ -78,7 +80,7 @@ def make_func(ctx, defname, callname, ty, nargs=1, byref=False):
 def test_link_real():
     ctx = new_ctx()
     def mkfunc(defname, callname, ty):
-        return make_func(ctx, defname, callname + str(ty), ty)
+        return make_func(ctx, defname, mkname(callname, ty), ty)
 
     mkfunc('mysinf', sinname, ltypes.l_float)
     mkfunc('mysin',  sinname, ltypes.l_double)
@@ -98,13 +100,11 @@ def _base_type(ty):
 def test_link_complex():
     ctx = new_ctx()
     def mkfunc(defname, callname, ty):
-        return make_func(ctx, defname, callname + str(ty), ty, byref=True)
+        return make_func(ctx, defname, mkname(callname, ty), ty, byref=True)
 
     mkfunc('mycsinf', sinname, ltypes.l_complex64)
     mkfunc('mycsin',  sinname, ltypes.l_complex128)
     mkfunc('mycsinl', sinname, ltypes.l_complex256)
-
-    # print(ctx.module)
     ctx.link()
     print(ctx.module)
 
@@ -132,23 +132,25 @@ def test_link_complex():
 def test_link_binary():
     ctx = new_ctx()
     ty = ltypes.l_complex128
-    make_func(ctx, 'mypow', powname + str(ty), ty, nargs=2, byref=True)
+    make_func(ctx, 'mypow', mkname(powname, ty), ty, nargs=2, byref=True)
     ctx.link()
     m = test_support.make_mod(ctx)
     print(ctx.module)
 
-    assert _base_type(m.mypow.argtypes[0]) == ctypes.c_double
+    assert list(map(_base_type, m.mypow.argtypes)) == [ctypes.c_double] * 3
+    assert m.mypow.restype is None
+    print("---")
+    print(m.mypow.argtypes)
+    print("---")
 
     inputs = 2+2j, 3+3j
     result = test_support.call_complex_byref(m.mypow, *inputs)
     expect = pow(*inputs)
 
     print(result, expect)
-    assert result == expect, (result, expect)
+    assert np.allclose([result], [expect]), (result, expect)
 
 # ______________________________________________________________________
 
 def test_link_external():
     ctx = new_ctx()
-
-test_link_binary()
