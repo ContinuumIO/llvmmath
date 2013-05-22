@@ -3,17 +3,15 @@ from __future__ import print_function, division, absolute_import
 
 import ctypes
 from collections import namedtuple
-from functools import partial
 import math
 import cmath
 
-from .. import ltypes, llvm_support, linking, libs, have_llvm_asm
+from .. import ltypes, linking, libs, have_llvm_asm
 from nose_parameterized import parameterized
 from . import support
 
 import numpy as np
 from llvm.core import *
-from llvm.ee import GenericValue
 
 # ______________________________________________________________________
 

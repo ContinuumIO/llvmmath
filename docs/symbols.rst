@@ -18,5 +18,3 @@ The list of symbols is below:
 .. literalinclude:: ../llvmmath/RequiredSymbols.txt
     :language: c
     :linenos:
-
-.. :emphasize-lines: 12,15-18

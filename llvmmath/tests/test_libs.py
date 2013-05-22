@@ -7,7 +7,7 @@ from functools import partial
 import llvm.core as lc
 import numpy as np
 
-from .. import ltypes, libs, llvm_support, symbols
+from .. import ltypes, libs, llvm_support
 from . import support
 
 # ______________________________________________________________________

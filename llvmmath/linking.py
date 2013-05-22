@@ -11,8 +11,6 @@ from . import ltypes
 from . import complex_support
 
 import llvm.core as lc
-import llvm.passes as lp
-import llvm.ee as le
 from llvmpy.api import llvm
 
 llvm_context = llvm.getGlobalContext()
