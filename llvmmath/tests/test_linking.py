@@ -2,13 +2,12 @@
 from __future__ import print_function, division, absolute_import
 
 import ctypes
-import types
 from collections import namedtuple
 from functools import partial
 import math
 import cmath
 
-from .. import ltypes, llvm_support, linking, libs
+from .. import ltypes, llvm_support, linking, libs, have_bitcode
 from . import test_support
 
 import numpy as np
@@ -46,7 +45,7 @@ def new_ctx(lib=None, linker=None):
     replacements = all_replacements()
 
     if lib is None:
-        lib = libs.get_default_math_lib()
+        lib = libs.get_mathlib_bc()
         linker = linking.LLVMLinker()
 
     link = partial(linking.link_llvm_math_intrinsics,

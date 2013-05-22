@@ -8,6 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 import types
 import ctypes
+import functools
 import collections
 
 from .. import llvm_support, ltypes
@@ -16,6 +17,7 @@ import llvm
 import llvm.core as lc
 import llvm.passes as lp
 import llvm.ee as le
+from nose.plugins.skip import SkipTest
 
 LLVMContext = collections.namedtuple("LLVMContext", "engine module pm")
 
@@ -152,3 +154,17 @@ def create_byval_wrapper(wrapped, name):
     ret = b.call(wrapped, f.args)
     b.ret(ret)
     return f
+
+#===------------------------------------------------------------------===
+# Testing
+#===------------------------------------------------------------------===
+
+def skip_if(cond, msg="Skipping"):
+    def dec(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            if cond:
+                raise SkipTest(msg)
+            return f(*args, **kwargs)
+        return wrapper
+    return dec
