@@ -8,7 +8,7 @@ import llvm.core as lc
 import numpy as np
 
 from .. import ltypes, libs, llvm_support, symbols
-from . import test_support
+from . import support
 
 # ______________________________________________________________________
 
@@ -50,7 +50,7 @@ def run(libm, name, sig, dtype):
     npy_func = getattr(np, npy_name)
     func = getattr(libm, cname)
     if sig.restype.kind == lc.TYPE_STRUCT:
-        func = partial(test_support.call_complex_byref, func)
+        func = partial(support.call_complex_byref, func)
 
     test_data = get_idata(dtype)
     if npy_name.startswith('arc'):
@@ -74,10 +74,10 @@ def run_from_types(library, libm, types):
                 run(libm, name, sig, dtype)
 
 def test_llvm_library():
-    lib = libs.get_mathlib_bc()
+    lib = libs.get_default_math_lib()
     assert not lib.missing, lib.missing
 
-    engine, module, pm = test_support.make_llvm_context()
+    engine, module, pm = support.make_llvm_context()
     libm = types.ModuleType('libm')
     llvm_support.wrap_llvm_module(lib.module, engine, libm)
 

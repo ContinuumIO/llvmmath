@@ -8,7 +8,8 @@ import math
 import cmath
 
 from .. import ltypes, llvm_support, linking, libs, have_bitcode
-from . import test_support
+from nose_parameterized import parameterized
+from . import support
 
 import numpy as np
 from llvm.core import *
@@ -38,25 +39,37 @@ def all_replacements():
 
 # ______________________________________________________________________
 
-Ctx = namedtuple('Ctx', "engine module pm link")
+class _Ctx(namedtuple('Ctx', "engine module pm lib linker, replacements")):
+    def mkbyval(self, defname, callname, ty):
+        return make_func(self, defname, mkname(callname, ty), ty)
 
-def new_ctx(lib=None, linker=None):
-    engine, mod, pm = test_support.make_llvm_context()
-    replacements = all_replacements()
+    def mkbyref(self, defname, callname, ty):
+        return make_func(self, defname, mkname(callname, ty), ty, byref=True)
 
-    if lib is None:
-        lib = libs.get_mathlib_bc()
-        linker = linking.LLVMLinker()
-
-    link = partial(linking.link_llvm_math_intrinsics,
-                   engine, mod, lib, linker, replacements)
-    def verify():
-        link()
+    def link(self):
+        engine, mod, pm, lib, linker, replacements = self
+        linking.link_llvm_math_intrinsics(
+            engine, mod, lib, linker, replacements)
         mod.verify()
 
-    return Ctx(engine, mod, pm, verify)
+def new_ctx(lib, linker):
+    engine, mod, pm = support.make_llvm_context()
+    return _Ctx(engine, mod, pm, lib, linker, all_replacements())
 
-# ______________________________________________________________________
+def make_contexts():
+    "Create LLVM contexts (_Ctx) for the .so and .s lib"
+    so = libs.get_mathlib_so()
+    so_linker = linking.ExternalLibraryLinker()
+    ctx1 = new_ctx(lib=so, linker=so_linker)
+    contexts = [(ctx1,)]
+
+    if have_bitcode():
+        asm = libs.get_mathlib_bc()
+        asm_linker = linking.LLVMLinker()
+        ctx2 = new_ctx(lib=asm, linker=asm_linker)
+        contexts.append((ctx2,))
+
+    return contexts
 
 def make_func(ctx, defname, callname, ty, nargs=1, byref=False):
     """
@@ -66,9 +79,9 @@ def make_func(ctx, defname, callname, ty, nargs=1, byref=False):
     fty = Type.function(ty, [ty] * nargs)
     wrapped = ctx.module.get_or_insert_function(fty, callname)
     if byref:
-        wrap = test_support.create_byref_wrapper
+        wrap = support.create_byref_wrapper
     else:
-        wrap = test_support.create_byval_wrapper
+        wrap = support.create_byval_wrapper
 
     return wrap(wrapped, defname)
 
@@ -76,19 +89,16 @@ def make_func(ctx, defname, callname, ty, nargs=1, byref=False):
 # Tests
 #===------------------------------------------------------------------===
 
-def test_link_real():
-    ctx = new_ctx()
-    def mkfunc(defname, callname, ty):
-        return make_func(ctx, defname, mkname(callname, ty), ty)
-
-    mkfunc('mysinf', sinname, ltypes.l_float)
-    mkfunc('mysin',  sinname, ltypes.l_double)
-    mkfunc('mysinl', sinname, ltypes.l_longdouble)
+@parameterized(make_contexts())
+def test_link_real(ctx):
+    ctx.mkbyval('mysinf', sinname, ltypes.l_float)
+    ctx.mkbyval('mysin',  sinname, ltypes.l_double)
+    ctx.mkbyval('mysinl', sinname, ltypes.l_longdouble)
 
     # print(ctx.module)
     ctx.link()
 
-    m = test_support.make_mod(ctx)
+    m = support.make_mod(ctx)
     our_result = m.mysinf(10.0), m.mysin(10.0), m.mysinl(10.0)
     exp_result = [math.sin(10.0)] * 3
     assert np.allclose(our_result, exp_result)
@@ -96,22 +106,19 @@ def test_link_real():
 def _base_type(ty):
     return ty._type_._fields_[0][1] # Get the base type of a complex *
 
-def test_link_complex():
-    ctx = new_ctx()
-    def mkfunc(defname, callname, ty):
-        return make_func(ctx, defname, mkname(callname, ty), ty, byref=True)
-
-    mkfunc('mycsinf', sinname, ltypes.l_complex64)
-    mkfunc('mycsin',  sinname, ltypes.l_complex128)
-    mkfunc('mycsinl', sinname, ltypes.l_complex256)
+@parameterized(make_contexts())
+def test_link_complex(ctx):
+    ctx.mkbyref('mycsinf', sinname, ltypes.l_complex64)
+    ctx.mkbyref('mycsin',  sinname, ltypes.l_complex128)
+    ctx.mkbyref('mycsinl', sinname, ltypes.l_complex256)
     ctx.link()
     print(ctx.module)
 
-    m = test_support.make_mod(ctx)
+    m = support.make_mod(ctx)
     input = 10+2j
 
     result = cmath.sin(input)
-    call = test_support.call_complex_byref
+    call = support.call_complex_byref
 
     typeof = lambda f: _base_type(f.argtypes[0])
     assert typeof(m.mycsinf) == ctypes.c_float
@@ -128,12 +135,12 @@ def test_link_complex():
 
 # ______________________________________________________________________
 
-def test_link_binary():
-    ctx = new_ctx()
+@parameterized(make_contexts())
+def test_link_binary(ctx):
     ty = ltypes.l_complex128
     make_func(ctx, 'mypow', mkname(powname, ty), ty, nargs=2, byref=True)
     ctx.link()
-    m = test_support.make_mod(ctx)
+    m = support.make_mod(ctx)
     print(ctx.module)
 
     assert list(map(_base_type, m.mypow.argtypes)) == [ctypes.c_double] * 3
@@ -143,7 +150,7 @@ def test_link_binary():
     print("---")
 
     inputs = 2+2j, 3+3j
-    result = test_support.call_complex_byref(m.mypow, *inputs)
+    result = support.call_complex_byref(m.mypow, *inputs)
     expect = pow(*inputs)
 
     print(result, expect)
@@ -151,5 +158,6 @@ def test_link_binary():
 
 # ______________________________________________________________________
 
-def test_link_external():
-    ctx = new_ctx()
+@parameterized(make_contexts())
+def test_link_external(ctx):
+    pass

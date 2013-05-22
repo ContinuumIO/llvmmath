@@ -4,7 +4,7 @@ from __future__ import print_function, division, absolute_import
 from functools import partial
 
 from .. import ltypes
-from . import test_support
+from . import support
 
 from llvm.core import *
 
@@ -21,18 +21,18 @@ def test_complex_abi_byref():
 # ______________________________________________________________________
 
 def run(wrap, call_wrapped, ty):
-    engine, mod, pm = ctx = test_support.make_llvm_context()
+    engine, mod, pm = ctx = support.make_llvm_context()
     double_func = make_double_func(mod, ty)
     wrap(double_func, 'wrapper')
 
-    pymod = test_support.make_mod(ctx)
+    pymod = support.make_mod(ctx)
     result = call_wrapped(pymod.wrapper, 5+6j)
     assert result == 10+12j, result
 
-run_byval = partial(run, test_support.create_byval_wrapper,
-                    test_support.call_complex_byval)
-run_byref = partial(run, test_support.create_byref_wrapper,
-                    test_support.call_complex_byref)
+run_byval = partial(run, support.create_byval_wrapper,
+                    support.call_complex_byval)
+run_byref = partial(run, support.create_byref_wrapper,
+                    support.call_complex_byref)
 
 # ______________________________________________________________________
 

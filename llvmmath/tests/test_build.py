@@ -7,8 +7,8 @@ import ctypes
 import types
 import math
 
-from .. import llvm_support, build
-from . import test_support
+from .. import llvm_support, build, have_bitcode
+from . import support
 
 pkgdir = dirname(dirname(abspath(__file__)))
 mathcode = join(pkgdir, 'mathcode')
@@ -36,6 +36,7 @@ def test_build_shared():
 
 # ______________________________________________________________________
 
+@support.skip_if(not have_bitcode())
 def test_build_llvm():
     "Test building llvm and getting and using the resulting llvm module"
     if exists(mathcode_asm):
@@ -54,7 +55,7 @@ def test_get_llvm_lib():
     if exists(mathcode_asm):
         os.remove(mathcode_asm)
 
-    lctx = test_support.make_llvm_context()
+    lctx = support.make_llvm_context()
     lmod = build.load_llvm_asm()
     mod = types.ModuleType('llvmmod')
     llvm_support.wrap_llvm_module(lmod, lctx.engine, mod)
