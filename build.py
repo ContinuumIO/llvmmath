@@ -85,12 +85,17 @@ def build(config=default_config):
         config.log("Building with target: %s" % build_target)
         build_target(config)
 
+bitcode_fn = join(root, 'mathcode', 'mathcode.s')
+
+def have_bitcode():
+    "See whether we have compiled bitcode available"
+    return exists(bitcode_fn)
+
 def load_llvm_asm():
     "Load the math library as an LLVM module"
-    bc = join(root, 'mathcode', 'mathcode.s')
-    if not exists(bc):
+    if not exists(bitcode_fn):
         build(mkconfig(default_config, targets=[build_bitcode]))
-    return llvm.core.Module.from_assembly(open(bc))
+    return llvm.core.Module.from_assembly(open(bitcode_fn))
 
 #===------------------------------------------------------------------===
 # Generate numpy config.h -- numpy/core/setup.py:generate_config_h

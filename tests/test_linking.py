@@ -46,7 +46,7 @@ def new_ctx(lib=None, linker=None):
     replacements = all_replacements()
 
     if lib is None:
-        lib = libs.get_mathlib_bc()
+        lib = libs.get_default_math_lib()
         linker = linking.LLVMLinker()
 
     link = partial(linking.link_llvm_math_intrinsics,

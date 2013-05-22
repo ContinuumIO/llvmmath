@@ -118,8 +118,19 @@ def get_mathlib_so():
         Library(), symbols.CtypesLib(llvmmath, mathcode_mangler))
     return llvm_library
 
+@_cached
 def get_mathlib_bc():
     "Load the math from mathcode/ from clang-compiled bitcode"
     lmath = build.load_llvm_asm()
     return symbols.get_symbols(LLVMLibrary(lmath),
                                symbols.LLVMLib(lmath, mathcode_mangler))
+
+# ______________________________________________________________________
+# Default
+
+def get_default_math_lib():
+    "Get the default math library implementation"
+    if build.have_bitcode():
+        return get_mathlib_bc()
+    else:
+        return get_mathlib_so()
