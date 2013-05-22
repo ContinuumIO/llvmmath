@@ -42,7 +42,7 @@ def test_build_llvm():
     if exists(mathcode_asm):
         os.remove(mathcode_asm)
 
-    config = build.mkconfig(build.default_config, targets=[build.build_bitcode])
+    config = build.mkconfig(build.default_config, targets=[build.build_llvm])
     build.build(config=config)
     assert exists(mathcode_asm)
 

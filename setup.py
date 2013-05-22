@@ -3,19 +3,23 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import sys
+import logging
 from itertools import imap, ifilter
 from fnmatch import fnmatchcase
 from os.path import join, dirname, abspath, isfile
 from distutils.util import convert_path
 from distutils.core import setup, Extension
 
-import llvmmath.build
+import llvmmath
+from llvmmath import build
 
 import numpy
 
 # python 3
 map = lambda *args: list(imap(*args))
 filter = lambda *args: list(ifilter(*args))
+
+logger = logging.getLogger('llvmmath')
 
 #===------------------------------------------------------------------===
 # Setup constants and arguments
@@ -79,7 +83,17 @@ def run_2to3():
 # Generate code for build
 #===------------------------------------------------------------------===
 
-llvmmath.build.build()
+if build.have_clang():
+    # Build llvm asm
+    targets = [build.build_llvm]
+else:
+    # Only process source files, have distutils build the extension
+    logging.info("Working clang not found, building math library with "
+                 "default C compiler")
+    targets = []
+
+config = build.mkconfig(build.default_config, targets=targets)
+llvmmath.build.build(config)
 
 #===------------------------------------------------------------------===
 # setup
@@ -106,6 +120,7 @@ setup(
         '': ['*.md', '*.cfg'],
         'llvmmath.mathcode': ['*.c', '*.h', '*.src', 'README', 'private/*.h'],
     },
+    # data_files=[('llvmmath', ['logging.conf'])],
     ext_modules=[
         Extension(
             name="llvmmath.mathcode.mathcode",
