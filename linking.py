@@ -50,7 +50,9 @@ def make_complex_wrapper(module, lfunc_src, lfunc_dst):
         Create wrapper '{f,f} wrapsin({f,f} arg)' that calls
         'void sin({f,f}* arg, {f,f}* out)'
     """
-    dst_argty = lfunc_dst.args[0].type
+    dst_fty = lfunc_dst.type.pointee
+    dst_argtys = dst_fty.args[:-1]
+    dst_retty = dst_fty.args[-1]
 
     fty = lfunc_src.type.pointee
     name = 'llvmmath.complexwrapper.%s' % (lfunc_src.name,)
@@ -62,12 +64,13 @@ def make_complex_wrapper(module, lfunc_src, lfunc_dst):
     ret = b.alloca(fty.return_type, 'result')
 
     newargs = []
-    for arg in lfunc_src.args:
+    for arg, dst_argty in zip(lfunc.args, dst_argtys):
         dstarg = b.alloca(arg.type, 'arg')
-        b.store(lfunc.args[0], dstarg)
+        b.store(arg, dstarg)
         newargs.append(b.bitcast(dstarg, dst_argty))
-
-    b.call(lfunc_dst, newargs + [b.bitcast(ret, dst_argty)])
+    print(".........", ret, dst_retty)
+    b.call(lfunc_dst, newargs + [b.bitcast(ret, dst_retty)])
+    print("...")
     b.ret(b.load(ret))
 
     return lfunc

@@ -10,7 +10,7 @@ import types
 import ctypes
 import collections
 
-from .. import llvm_support
+from .. import llvm_support, ltypes
 
 import llvm
 import llvm.core as lc
@@ -35,36 +35,62 @@ def make_mod(ctx):
     llvm_support.wrap_llvm_module(ctx.module, ctx.engine, m)
     return m
 
+def print_complex(mod, builder, *complex_vals):
+    try:
+        mod.get_global_variable_named('fmtstring')
+    except llvm.LLVMException:
+        lconst_str = lc.Constant.stringz("complex: %f %f\n")
+        ret_val = mod.add_global_variable(lconst_str.type, 'fmtstring')
+        ret_val.linkage = llvm.core.LINKAGE_LINKONCE_ODR
+        ret_val.initializer = lconst_str
+        ret_val.is_global_constant = True
+
+    fmtstring = mod.get_global_variable_named('fmtstring')
+
+    for complex_val in complex_vals:
+        real = builder.extract_value(complex_val, 0)
+        imag = builder.extract_value(complex_val, 1)
+
+        str_ty = lc.Type.pointer(lc.Type.int(1))
+        printf_ty = lc.Type.function(
+            ltypes.l_int, [str_ty], var_arg=True)
+        printf = mod.get_or_insert_function(printf_ty, 'printf')
+        builder.call(printf, [builder.bitcast(fmtstring, str_ty), real, imag])
+
 #===------------------------------------------------------------------===
 # Call complex functions
 #===------------------------------------------------------------------===
 
-def build_complex_args(f, *inputs):
+def build_complex_args(argtypes, *inputs):
     c_args = []
-    for c_argty, input in zip(f.argtypes, inputs):
+    for c_argty, input in zip(argtypes, inputs):
         c_args.append(c_argty(input.real, input.imag))
     return c_args
 
 def call_complex_byval(f, *inputs):
-    "Call unary complex function by value, e.g. complex func(complex)"
-    c_args = build_complex_args(f, *inputs)
+    "Call complex function by value, e.g. complex func(complex)"
+    c_args = build_complex_args(f.argtypes, *inputs)
     c_result = f(*c_args)
     return complex(c_result.e0, c_result.e1)
 
-def call_complex_byref(f, input):
+def call_complex_byref(f, *inputs):
     """
-    Call unary complex function by reference, e.g.
-    void sin(complex *, complex *)
+    Call complex function by reference, e.g. void sin(complex *in, complex *out)
     """
     if f.restype is not None:
         return call_complex_byval_return(f, input)
-    c_argty = f.argtypes[0]._type_ # get base type from pointer argtype
-    c_resty = f.argtypes[1]._type_
 
+    c_resty = f.argtypes[1]._type_ # get base type from pointer argtype
     c_result = c_resty(0)
-    c_input = c_argty(input.real, input.imag)
-    c_input_p, c_result_p = ctypes.pointer(c_input), ctypes.pointer(c_result)
-    f(c_input_p, c_result_p)
+
+    c_args = build_complex_args([pty._type_ for pty in f.argtypes], *inputs)
+    c_args.append(c_result)
+
+    # Without this it doesn't work?
+    assert ctypes.POINTER(f.argtypes[0]._type_) == f.argtypes[0]
+    f.argtypes = [type(c_arg) for c_arg in c_args]
+
+    f(*c_args)
 
     if issubclass(c_resty, ctypes.Structure):
         return complex(c_result.e0, c_result.e1)
@@ -104,7 +130,9 @@ def create_byref_wrapper(wrapped, name):
     bb = f.append_basic_block('entry')
     b = lc.Builder.new(bb)
 
-    ret = b.call(wrapped, map(b.load, f.args[:-1]))
+    args = list(map(b.load, f.args[:-1]))
+    print_complex(mod, b, *args)
+    ret = b.call(wrapped, args)
     b.store(ret, f.args[-1])
     b.ret_void()
     return f

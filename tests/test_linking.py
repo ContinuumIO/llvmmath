@@ -92,12 +92,14 @@ def test_link_real():
     exp_result = [math.sin(10.0)] * 3
     assert np.allclose(our_result, exp_result)
 
+def _base_type(ty):
+    return ty._type_._fields_[0][1] # Get the base type of a complex *
+
 def test_link_complex():
     ctx = new_ctx()
     def mkfunc(defname, callname, ty):
         return make_func(ctx, defname, callname + str(ty), ty, byref=True)
 
-    # NOTE: we can't reliably call our function. TODO: pass by reference
     mkfunc('mycsinf', sinname, ltypes.l_complex64)
     mkfunc('mycsin',  sinname, ltypes.l_complex128)
     mkfunc('mycsinl', sinname, ltypes.l_complex256)
@@ -112,8 +114,7 @@ def test_link_complex():
     result = cmath.sin(input)
     call = test_support.call_complex_byref
 
-    firstfield = lambda f: f.argtypes[0]._type_._fields_[0]
-    typeof = lambda f: firstfield(f)[1]
+    typeof = lambda f: _base_type(f.argtypes[0])
     assert typeof(m.mycsinf) == ctypes.c_float
     assert typeof(m.mycsin) == ctypes.c_double
     assert typeof(m.mycsinl) in (ctypes.c_double, ctypes.c_longdouble)
@@ -131,12 +132,15 @@ def test_link_complex():
 def test_link_binary():
     ctx = new_ctx()
     ty = ltypes.l_complex128
-    make_func(ctx, 'mypow', powname + str(ty), ty, nargs=2)
+    make_func(ctx, 'mypow', powname + str(ty), ty, nargs=2, byref=True)
     ctx.link()
     m = test_support.make_mod(ctx)
+    print(ctx.module)
+
+    assert _base_type(m.mypow.argtypes[0]) == ctypes.c_double
 
     inputs = 2+2j, 3+3j
-    result = test_support.call_complex_byval(m.mypow, *inputs)
+    result = test_support.call_complex_byref(m.mypow, *inputs)
     expect = pow(*inputs)
 
     print(result, expect)
@@ -147,5 +151,4 @@ def test_link_binary():
 def test_link_external():
     ctx = new_ctx()
 
-# test_link_real()
-test_link_complex()
+test_link_binary()
