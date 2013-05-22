@@ -104,7 +104,7 @@ setup(
     packages=find_packages(exclude=exclude_packages),
     package_data={
         '': ['*.md', '*.cfg'],
-        'llvmmath': ['mathcode/*'],
+        'llvmmath.mathcode': ['*.c', '*.h', '*.src', 'README', 'private/*.h'],
     },
     ext_modules=[
         Extension(
