@@ -13,6 +13,7 @@ from os.path import join, dirname
 import collections
 
 from . import symbols, build, ltypes, naming
+from .utils import cached
 
 import llvm.core
 import numpy.core.umath
@@ -57,20 +58,6 @@ class LLVMLibrary(Library):
         return linkable.name
 
 #===------------------------------------------------------------------===
-# Helpers
-#===------------------------------------------------------------------===
-
-def _cached(f):
-    result = []
-    def wrapper(*args, **kwargs):
-        if len(result) == 0:
-            ret = f(*args, **kwargs)
-            result.append(ret)
-
-        return result[0]
-    return wrapper
-
-#===------------------------------------------------------------------===
 # Math symbol manglers
 #===------------------------------------------------------------------===
 
@@ -93,13 +80,13 @@ def mathcode_mangler(name, sig):
 # Public Interface
 #===------------------------------------------------------------------===
 
-@_cached
+@cached
 def get_libm():
     "Get a math library from the system's libm"
     libm = ctypes.CDLL(ctypes.util.find_library("m"))
     return symbols.get_symbols(Library(), symbols.CtypesLib(libm))
 
-@_cached
+@cached
 def get_umath():
     "Load numpy's umath as a math library"
     umath = ctypes.CDLL(numpy.core.umath.__file__)
@@ -107,7 +94,7 @@ def get_umath():
         Library(), symbols.CtypesLib(umath, mangler=umath_mangler))
     return umath_library
 
-@_cached
+@cached
 def get_openlibm():
     "Load openlibm from its shared library"
     symbol_data = open(os.path.join(os.path.dirname(__file__), "Symbol.map")).read()
@@ -118,7 +105,7 @@ def get_openlibm():
         Library(), symbols.CtypesLib(openlibm, have_symbol=olm_have_sym))
     return openlibm_library
 
-@_cached
+@cached
 def get_mathlib_so():
     "Load the math from mathcode/ from a shared library"
     dylib = 'mathcode' + build.find_shared_ending()
@@ -127,7 +114,7 @@ def get_mathlib_so():
         Library(), symbols.CtypesLib(llvmmath, mathcode_mangler))
     return llvm_library
 
-@_cached
+@cached
 def get_mathlib_bc():
     "Load the math from mathcode/ from clang-compiled bitcode"
     lmath = build.load_llvm_asm()

@@ -15,6 +15,7 @@ from collections import namedtuple
 from os.path import join, dirname, abspath, exists
 from subprocess import call, check_call, PIPE
 
+from .utils import cached
 from .generator import generate_config
 
 import llvm.core
@@ -110,6 +111,7 @@ def have_llvm_asm():
     "See whether we have compiled llvm assembly available"
     return exists(bitcode_fn)
 
+@cached
 def have_clang():
     "See whether we have clang installed and working"
     try:

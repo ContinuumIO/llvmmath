@@ -7,7 +7,7 @@ import ctypes
 import types
 import math
 
-from .. import llvm_support, build, have_llvm_asm
+from .. import llvm_support, build, have_llvm_asm, have_clang
 from . import support
 
 pkgdir = dirname(dirname(abspath(__file__)))
@@ -17,8 +17,9 @@ mathcode_asm = join(mathcode, 'mathcode.s')
 
 # ______________________________________________________________________
 
+@support.skip_if(not have_clang())
 def test_build_shared():
-    "Test building and getting and using the shared library llvm module"
+    "Test building and getting and using the shared library"
     if exists(mathcode_so):
         os.remove(mathcode_so)
 
@@ -36,7 +37,7 @@ def test_build_shared():
 
 # ______________________________________________________________________
 
-@support.skip_if(not have_llvm_asm())
+@support.skip_if(not have_clang())
 def test_build_llvm():
     "Test building llvm and getting and using the resulting llvm module"
     if exists(mathcode_asm):
@@ -50,6 +51,7 @@ def test_build_llvm():
 
 # ______________________________________________________________________
 
+@support.skip_if(not have_llvm_asm())
 def test_get_llvm_lib():
     "Test getting the llvm lib from a clean environment"
     if exists(mathcode_asm):

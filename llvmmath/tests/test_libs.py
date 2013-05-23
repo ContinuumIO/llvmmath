@@ -12,9 +12,10 @@ from . import support
 
 # ______________________________________________________________________
 
-np_integral = ['i', 'l', np.longlong]
-np_floating = ['f', 'd', np.float128]
-np_complexes = [np.complex64, np.complex128, np.complex256]
+np_integral = ['i', 'l', getattr(np, 'longlong', 'l')]
+np_floating = ['f', 'd', getattr(np, 'float128', np.double)]
+np_complexes = [np.complex64, np.complex128, getattr(np, 'complex256',
+                                                     np.complex128)]
 
 npy_typemap = {
     ltypes.integral: np_integral,
