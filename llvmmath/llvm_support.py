@@ -7,13 +7,15 @@ Originally adapated from Bitey, blaze/blir/bind.py.
 
 from __future__ import print_function, division, absolute_import
 
-from llvm.core import Module
-import llvm.core
-import llvm.ee
+from functools import partial
 import ctypes
 import io
 import os
 import sys
+
+from llvm.core import Module
+import llvm.core
+import llvm.ee
 
 PY3 = sys.version_info[0] >= 3
 
@@ -109,22 +111,12 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
 
     return ctype
 
-def wrap_llvm_function(func, engine, py_module):
-    '''
-    Create a ctypes wrapper around an LLVM function.
-    engine is the LLVM execution engine.
-    func is an LLVM function instance.
-    py_module is a Python module where to put the wrappers.
-    '''
+def get_ctypes_wrapper(func, engine, map_llvm_to_ctypes=map_llvm_to_ctypes):
     args = func.type.pointee.args
     ret_type = func.type.pointee.return_type
-    try:
-        ret_ctype = map_llvm_to_ctypes(ret_type, py_module)
-        args_ctypes = [map_llvm_to_ctypes(arg, py_module) for arg in args]
-    except TypeError as e:
-        if 'BITEYDEBUG' in os.environ:
-            print("Couldn't wrap %s. Reason %s" % (func.name, e))
-        return None
+
+    ret_ctype = map_llvm_to_ctypes(ret_type)
+    args_ctypes = [map_llvm_to_ctypes(arg) for arg in args]
 
     # Declare the ctypes function prototype
     functype = ctypes.CFUNCTYPE(ret_ctype, *args_ctypes)
@@ -133,8 +125,17 @@ def wrap_llvm_function(func, engine, py_module):
     addr = engine.get_pointer_to_function(func)
 
     # Make a ctypes callable out of it
-    wrapper = functype(addr)
+    return functype(addr)
 
+def wrap_llvm_function(func, engine, py_module):
+    '''
+    Create a ctypes wrapper around an LLVM function.
+    engine is the LLVM execution engine.
+    func is an LLVM function instance.
+    py_module is a Python module where to put the wrappers.
+    '''
+    ctypes_mapper = partial(map_llvm_to_ctypes, py_module=py_module)
+    wrapper = get_ctypes_wrapper(func, engine, ctypes_mapper)
     # Set it in the module
     setattr(py_module, func.name, wrapper)
     wrapper.__name__ = func.name

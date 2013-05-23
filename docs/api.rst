@@ -37,6 +37,10 @@ as follows:
 
 .. code-block:: pycon
 
+    >>> from llvmmath import types
+    >>> print ltypes.l_complex128
+    { double, double }
+
     >>> from llvmmath import ltypes
     >>> print ltypes.l_complex128
     { double, double }

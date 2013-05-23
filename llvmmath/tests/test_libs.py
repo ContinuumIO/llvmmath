@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import
 
-import types
 from functools import partial
 
 import llvm.core as lc
 import numpy as np
 
-from .. import ltypes, libs, llvm_support
+from .. import ltypes, libs
 from . import support
 
 # ______________________________________________________________________
@@ -70,17 +69,14 @@ def run(libm, name, sig, dtype):
 def run_from_types(library, libm, types):
     for name, signatures in library.symbols.iteritems():
         for ty, dtype in zip(types, npy_typemap[types]):
-            sig = ltypes.Signature(ty, [ty])
+            sig = types.Signature(ty, [ty])
             if sig in signatures:
                 run(libm, name, sig, dtype)
 
 def test_llvm_library():
-    lib = libs.get_default_math_lib()
+    lib = libs.get_mathlib_so()
+    libm = libs.get_mathlib_as_ctypes()
     assert not lib.missing, lib.missing
-
-    engine, module, pm = support.make_llvm_context()
-    libm = types.ModuleType('libm')
-    llvm_support.wrap_llvm_module(lib.module, engine, libm)
 
     print(libm.npy_sinl(10.0))
 

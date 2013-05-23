@@ -8,6 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 from os.path import abspath, dirname, join
 import ctypes
+from collections import namedtuple
 
 from . import ltypes, parsesyms, naming
 from llvm.core import *
@@ -27,7 +28,7 @@ typemap = {
 # ______________________________________________________________________
 # Retrieve symbols
 
-class Lib(object):
+class MathLib(object):
     def __init__(self, libm, mangler=naming.mathname, have_symbol=None):
         """
         :param mangler: (name, llvm_type) -> math_name
@@ -41,26 +42,28 @@ class Lib(object):
             return self.get_libm_symbol(cname)
         return self._have_symbol(self.libm, cname)
 
-class CtypesLib(Lib):
+class CtypesMath(MathLib):
     def get_libm_symbol(self, cname):
         func = getattr(self.libm, cname, None)
         if func is not None:
             return ctypes.cast(func, ctypes.c_void_p).value
 
-class LLVMLib(Lib):
+class LLVMMath(MathLib):
     def get_libm_symbol(self, cname):
         try:
             return self.libm.get_function_named(cname)
         except llvm.LLVMException:
             return None
 
-def get_symbols(library, libm, required_symbols=required_symbols):
+# ______________________________________________________________________
+
+def get_symbols(library, mathlib, required_symbols=required_symbols):
     """
     Populate a dict with runtime addressed of math functions from a given
     ctypes library.
 
     :param library: math_support.Library to add symbols to
-    :param libm: ctypes or LLVM library of math functions
+    :param mathlib: ctypes or LLVM library of math functions
     """
     for symbol in required_symbols:
         types = (symbol.restype,) + symbol.argtypes
@@ -71,9 +74,9 @@ def get_symbols(library, libm, required_symbols=required_symbols):
                 # sizeof(long) == sizeof(longlong)
                 continue
 
-            cname = libm.mangle(symbol.name, sig)
-            if libm.have_symbol(cname):
-                libm_symbol = libm.get_libm_symbol(cname)
+            cname = mathlib.mangle(symbol.name, sig)
+            if mathlib.have_symbol(cname):
+                libm_symbol = mathlib.get_libm_symbol(cname)
                 library.add_symbol(symbol.name, sig, libm_symbol)
             else:
                 library.missing.append((symbol.name, cname, sig))

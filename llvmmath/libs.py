@@ -6,16 +6,17 @@ Support for math as a postpass on LLVM IR.
 
 from __future__ import print_function, division, absolute_import
 
-import os
+import types
 import ctypes.util
-from pprint import pprint
 from os.path import join, dirname, exists
 import collections
 
-from . import symbols, build, ltypes, naming
+from . import symbols, build, ltypes, naming, llvm_support, callconv
 from .utils import cached
+from .symbols import CtypesMath, LLVMMath, get_symbols
 
 import llvm.core
+import llvm.ee
 import numpy.core.umath
 
 root = dirname(__file__)
@@ -23,7 +24,10 @@ root = dirname(__file__)
 # ______________________________________________________________________
 
 class Library(object):
-    def __init__(self):
+    def __init__(self, module, calling_conv):
+        self.module = module # library module (ctypes of llvm module)
+        self.calling_convention = calling_conv # Signature -> Signature
+
         # # { func_name : { signature : link_obj } }
         self.symbols = collections.defaultdict(dict)
         self.missing = [] # (name, cname, sig)
@@ -36,7 +40,7 @@ class Library(object):
         return self.symbols.get(name, {}).get(signature)
 
     def format_linkable(self, linkable):
-        return hex(linkable)
+        return str(linkable)
 
     def __str__(self):
         result = []
@@ -49,13 +53,33 @@ class Library(object):
         sep = "\n    "
         return "Library(%s%s)" % (sep, sep.join(result))
 
-class LLVMLibrary(Library):
-    def __init__(self, module):
-        super(LLVMLibrary, self).__init__()
-        self.module = module # LLVM math module
+class CtypesLibrary(Library):
+    def format_linkable(self, linkable):
+        return hex(linkable)
 
+    def get_ctypes_symbol(self, name, signature):
+        ptr = self.get_symbol(name, signature)
+        assert ptr is not None
+        native_sig = self.calling_convention(signature)
+
+        to_ctypes = llvm_support.map_llvm_to_ctypes
+
+        sym = ctypes.cast(ptr, ctypes.c_void_p).value
+        sym.restype = to_ctypes(native_sig.restype)
+        sym.argtypes = list(map(to_ctypes, native_sig.argtypes))
+        return sym
+
+class LLVMLibrary(Library):
     def format_linkable(self, linkable):
         return linkable.name
+
+    def get_ctypes_symbol(self, name, signature):
+        lfunc = self.get_symbol(name, signature)
+        assert lfunc is not None
+        assert lfunc.type.pointee == self.calling_convention(signature)
+
+        engine = llvm.ee.ExecutionEngine.new(lfunc.module)
+        return llvm_support.get_ctypes_wrapper(lfunc, engine)
 
 #===------------------------------------------------------------------===
 # Math symbol manglers
@@ -80,52 +104,63 @@ def mathcode_mangler(name, sig):
 # Public Interface
 #===------------------------------------------------------------------===
 
+libmap = { CtypesMath: CtypesLibrary, LLVMMath: LLVMLibrary }
+
+def get_syms(mathlib, libmap=libmap, cc=callconv.convention_cbyref):
+    Library = libmap[type(mathlib)]
+    library = Library(mathlib.libm, cc)
+    return get_symbols(library, mathlib)
+
+# ______________________________________________________________________
+
 @cached
 def get_libm():
     "Get a math library from the system's libm"
     libm = ctypes.CDLL(ctypes.util.find_library("m"))
-    return symbols.get_symbols(Library(), symbols.CtypesLib(libm))
+    return get_syms(CtypesMath(libm))
 
 @cached
 def get_umath():
     "Load numpy's umath as a math library"
     umath = ctypes.CDLL(numpy.core.umath.__file__)
-    umath_library = symbols.get_symbols(
-        Library(), symbols.CtypesLib(umath, mangler=umath_mangler))
-    return umath_library
+    return get_syms(CtypesMath(umath, mangler=umath_mangler))
 
 @cached
 def get_openlibm():
     "Load openlibm from its shared library"
-    symbol_data = open(os.path.join(os.path.dirname(__file__), "Symbol.map")).read()
+    symbol_data = open(join(dirname(__file__), "Symbol.map")).read()
     openlibm_symbols = set(word.rstrip(';') for word in symbol_data.split())
     openlibm = ctypes.CDLL(ctypes.util.find_library("openlibm"))
-    olm_have_sym = lambda libm, cname: cname in openlibm_symbols
-    openlibm_library = symbols.get_symbols(
-        Library(), symbols.CtypesLib(openlibm, have_symbol=olm_have_sym))
-    return openlibm_library
+
+    have_sym = lambda libm, cname: cname in openlibm_symbols
+    return get_syms(CtypesMath(openlibm, have_symbol=have_sym))
+
+# ______________________________________________________________________
 
 @cached
-def get_mathlib_so():
-    "Load the math from mathcode/ from a shared library"
+def get_mathlib_as_ctypes():
+    "Get the math library as a ctypes CDLL"
     dylib = 'mathcode' + build.find_shared_ending()
     dylib = join(root, 'mathcode', dylib)
     if not exists(dylib):
         raise OSError("File not found: " + dylib)
     llvmmath = ctypes.CDLL(dylib)
-    llvm_library = symbols.get_symbols(
-        Library(), symbols.CtypesLib(llvmmath, mathcode_mangler))
-    return llvm_library
+    return llvmmath
+
+@cached
+def get_mathlib_so():
+    "Load the math from mathcode/ from a shared library"
+    llvmmath = get_mathlib_as_ctypes()
+    return get_syms(CtypesMath(llvmmath, mathcode_mangler))
 
 @cached
 def get_mathlib_bc():
     "Load the math from mathcode/ from clang-compiled bitcode"
     lmath = build.load_llvm_asm()
-    return symbols.get_symbols(LLVMLibrary(lmath),
-                               symbols.LLVMLib(lmath, mathcode_mangler))
+    return get_syms(LLVMMath(lmath, mathcode_mangler))
 
 # ______________________________________________________________________
-# Default
+# Default library
 
 def get_default_math_lib():
     "Get the default math library implementation"
