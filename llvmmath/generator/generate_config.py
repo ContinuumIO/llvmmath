@@ -19,7 +19,7 @@ need_define = [
     'SIN', 'COS', 'TAN', 'SINH', 'COSH', 'TANH', 'FABS', 'FLOOR',
     'CEIL', 'SQRT', 'LOG10', 'LOG', 'EXP', 'ASIN', 'ACOS', 'ATAN',
     'FMOD', 'MODF', 'FREXP', 'LDEXP', 'RINT', 'TRUNC', 'EXP2',
-    'LOG2', 'ATAN2', 'POW', 'NEXTAFTER',
+    'LOG2', 'ATAN2', 'POW', 'NEXTAFTER', 'COPYSIGN',
     # Complex
     'CREAL', 'CIMAG', 'CABS', 'CARG', 'CEXP', 'CSQRT', 'CLOG',
     'CCOS', 'CSIN', 'CPOW',

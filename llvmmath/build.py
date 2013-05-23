@@ -90,6 +90,7 @@ def build_source(config=default_config):
     process(mkfn('npy_math_integer.c.src'))
     process(mkfn('npy_math_floating.c.src'))
     process(mkfn('npy_math_complex.c.src'))
+    process(mkfn('ieee754.c.src'))
 
     # Generate config.h
     config.log("Writing config.h")

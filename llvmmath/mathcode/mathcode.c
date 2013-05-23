@@ -2,6 +2,7 @@
 #include "npy_math_integer.c"
 #include "npy_math_floating.c"
 #include "npy_math_complex.c"
+#include "ieee754.c"
 
 /* Make it an extension module to make windows happy */
 #if PY_MAJOR_VERSION >= 3
