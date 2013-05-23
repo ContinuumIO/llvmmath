@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # ______________________________________________________________________
 
-_shared_endings = { 'win': '.dll', 'dar': '.so', 'default': ".so", }
+_shared_endings = { 'win': '.pyd', 'dar': '.so', 'default': ".so", }
 
 def find_shared_ending():
     return _shared_endings.get(sys.platform[:3], _shared_endings['default'])

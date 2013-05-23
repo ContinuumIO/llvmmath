@@ -9,7 +9,7 @@ from __future__ import print_function, division, absolute_import
 import os
 import ctypes.util
 from pprint import pprint
-from os.path import join, dirname
+from os.path import join, dirname, exists
 import collections
 
 from . import symbols, build, ltypes, naming
@@ -109,7 +109,10 @@ def get_openlibm():
 def get_mathlib_so():
     "Load the math from mathcode/ from a shared library"
     dylib = 'mathcode' + build.find_shared_ending()
-    llvmmath = ctypes.CDLL(join(root, 'mathcode', dylib))
+    dylib = join(root, 'mathcode', dylib)
+    if not exists(dylib):
+        raise OSError("File not found: " + dylib)
+    llvmmath = ctypes.CDLL(dylib)
     llvm_library = symbols.get_symbols(
         Library(), symbols.CtypesLib(llvmmath, mathcode_mangler))
     return llvm_library
