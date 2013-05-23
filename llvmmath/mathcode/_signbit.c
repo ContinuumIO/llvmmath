@@ -1,9 +1,7 @@
 /* Originally adapted from cephes */
 /* Taken from numpy/core/src/npymath/_signbit.c */
 
-#include "export.h"
-
-DL_EXPORT(int)
+int
 _npy_signbit_d(double x)
 {
     union

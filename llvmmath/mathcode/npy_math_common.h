@@ -6,4 +6,4 @@
 #include <float.h>
 
 #include "npy_config.h"
-#include "numpy/npy_math.h"
+#include "npy_math.h"
