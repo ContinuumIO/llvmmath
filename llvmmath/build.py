@@ -48,6 +48,9 @@ def build_llvm(config):
 
 def build_shared(config):
     "Compile math library to a shared library with clang"
+    # TODO: Update for distutils (link with libpython)
+    raise NotImplementedError
+
     check_call([config.clang, '-O3', '-march=native',
                 '-c', 'mathcode.c', '-fPIC'] + includes, cwd=mathcode)
     check_call([config.clang, '-shared', 'mathcode.o',

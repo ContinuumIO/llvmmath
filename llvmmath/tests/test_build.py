@@ -10,6 +10,8 @@ import math
 from .. import llvm_support, build, have_llvm_asm, have_clang
 from . import support
 
+from nose.tools import nottest
+
 pkgdir = dirname(dirname(abspath(__file__)))
 mathcode = join(pkgdir, 'mathcode')
 mathcode_so  = join(mathcode, 'mathcode' + build.find_shared_ending())
@@ -17,6 +19,7 @@ mathcode_asm = join(mathcode, 'mathcode.s')
 
 # ______________________________________________________________________
 
+@nottest # disabled: this is an extension module now
 @support.skip_if(not have_clang())
 def test_build_shared():
     "Test building and getting and using the shared library"
