@@ -28,7 +28,7 @@ need_define = [
 # ______________________________________________________________________
 
 def define_macro(write, name, value=""):
-    write("#define %s %s" % (name, value))
+    write("#define %s %s\n" % (name, value))
 
 def generate_config(f):
     define = partial(define_macro, f.write)
@@ -49,5 +49,9 @@ def define_math(define):
     for suffix in ('', 'F', 'L'):
         for check_sym in need_define:
             symname = check_sym + suffix
-            have = hasattr(libm, symname)
+            have = hasattr(libm, symname.lower())
             define('HAVE_' + symname, int(have))
+
+if __name__ == '__main__':
+    import sys
+    generate_config(sys.stdout)
