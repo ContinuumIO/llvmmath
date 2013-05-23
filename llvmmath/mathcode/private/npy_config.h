@@ -11,10 +11,10 @@
 
 /* Safe to use ldexp and frexp for long double for MSVC builds */
 #if (SIZEOF_LONG_DOUBLE == SIZEOF_DOUBLE) || defined(_MSC_VER)
-    #ifdef HAVE_LDEXP
+    #if !HAVE_LDEXP
         #define HAVE_LDEXPL 1
     #endif
-    #ifdef HAVE_FREXP
+    #if !HAVE_FREXP
         #define HAVE_FREXPL 1
     #endif
 #endif

@@ -48,21 +48,21 @@
  * #C = F, , L#
  * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
  */
-#ifndef HAVE_CABS@C@
+#if !HAVE_CABS@C@
 @type@ npy_cabs@c@(@ctype@ z)
 {
     return npy_hypot@c@(npy_creal@c@(z), npy_cimag@c@(z));
 }
 #endif
 
-#ifndef HAVE_CARG@C@
+#if !HAVE_CARG@C@
 @type@ npy_carg@c@(@ctype@ z)
 {
     return npy_atan2@c@(npy_cimag@c@(z), npy_creal@c@(z));
 }
 #endif
 
-#ifndef HAVE_CEXP@C@
+#if !HAVE_CEXP@C@
 @ctype@ npy_cexp@c@(@ctype@ z)
 {
     @type@ x, c, s;
@@ -123,14 +123,14 @@
 }
 #endif
 
-#ifndef HAVE_CLOG@C@
+#if !HAVE_CLOG@C@
 @ctype@ npy_clog@c@(@ctype@ z)
 {
     return npy_cpack@c@(npy_log@c@ (npy_cabs@c@ (z)), npy_carg@c@ (z));
 }
 #endif
 
-#ifndef HAVE_CSQRT@C@
+#if !HAVE_CSQRT@C@
 
 /* We risk spurious overflow for components >= DBL_MAX / (1 + sqrt(2)). */
 #define THRESH  (@TMAX@ / (1 + NPY_SQRT2@c@))
@@ -198,7 +198,7 @@
 #undef THRESH
 #endif
 
-#ifndef HAVE_CPOW@C@
+#if !HAVE_CPOW@C@
 @ctype@ npy_cpow@c@ (@ctype@ x, @ctype@ y)
 {
     @ctype@ b;
@@ -214,7 +214,7 @@
 }
 #endif
 
-#ifndef HAVE_CCOS@C@
+#if !HAVE_CCOS@C@
 @ctype@ npy_ccos@c@(@ctype@ z)
 {
     @type@ x, y;
@@ -224,7 +224,7 @@
 }
 #endif
 
-#ifndef HAVE_CSIN@C@
+#if !HAVE_CSIN@C@
 @ctype@ npy_csin@c@(@ctype@ z)
 {
     @type@ x, y;
@@ -250,7 +250,7 @@
  * #kind = cabs,carg#
  * #KIND = CABS,CARG#
  */
-#ifdef HAVE_@KIND@@C@
+#if HAVE_@KIND@@C@
 @type@ npy_@kind@@c@(@ctype@ z)
 {
     __@ctype@_to_c99_cast z1 = {z};
@@ -263,7 +263,7 @@
  * #kind = cexp,clog,csqrt,ccos,csin#
  * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN#
  */
-#ifdef HAVE_@KIND@@C@
+#if HAVE_@KIND@@C@
 @ctype@ npy_@kind@@c@(@ctype@ z)
 {
     __@ctype@_to_c99_cast z1 = {z};
@@ -278,7 +278,7 @@
  * #kind = cpow#
  * #KIND = CPOW#
  */
-#ifdef HAVE_@KIND@@C@
+#if HAVE_@KIND@@C@
 @ctype@ npy_@kind@@c@(@ctype@ x, @ctype@ y)
 {
     __@ctype@_to_c99_cast xcast = {x};
