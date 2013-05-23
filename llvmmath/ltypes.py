@@ -25,10 +25,12 @@ def guess_longdouble_type():
     l_128 = Type.fp128()
     l_ppc = Type.ppc_fp128()
 
-    itemsize = np.dtype(np.float128).itemsize
+    if hasattr(np, 'float128'):
+        itemsize = np.dtype(np.float128).itemsize
+    else:
+        itemsize = ctypes.sizeof(ctypes.c_longdouble)
 
     if hasattr(np, 'float96'):
-        assert not is_ppc
         return l_80
     elif itemsize == 16:
         if is_ppc:
@@ -38,13 +40,13 @@ def guess_longdouble_type():
             return l_80
             # return l_128
     else:
-        assert itemsize == 8 and is_x86
+        assert itemsize == 8
         return Type.double()
 
 def get_target_triple():
     target_machine = llvm.ee.TargetMachine.new()
-    is_ppc = target_machine.triple.startswith("ppc")
-    is_x86 = target_machine.triple.startswith("x86")
+    is_ppc = target_machine.target_name.startswith("ppc")
+    is_x86 = target_machine.target_name.startswith("x86")
     return is_ppc, is_x86
 
 def get_longdouble_from_llvm():
