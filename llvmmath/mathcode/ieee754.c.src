@@ -7,11 +7,12 @@
  *
  * Low-level routines related to IEEE-754 format
  */
+#include "export.h"
 #include "npy_math_common.h"
 #include "npy_math_private.h"
 
 #if !HAVE_COPYSIGN
-double npy_copysign(double x, double y)
+DL_EXPORT(double) npy_copysign(double x, double y)
 {
     npy_uint32 hx, hy;
     GET_HIGH_WORD(hx, x);

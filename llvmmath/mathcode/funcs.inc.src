@@ -62,7 +62,7 @@
  */
 
 
-void
+DL_EXPORT(void)
 nc_sum@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
 {
     r->real = a->real + b->real;
@@ -70,7 +70,7 @@ nc_sum@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_diff@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
 {
     r->real = a->real - b->real;
@@ -78,7 +78,7 @@ nc_diff@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_neg@c@(@ctype@ *a, @ctype@ *r)
 {
     r->real = -a->real;
@@ -86,7 +86,7 @@ nc_neg@c@(@ctype@ *a, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_prod@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
 {
     @ftype@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
@@ -95,7 +95,7 @@ nc_prod@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_quot@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
 {
 
@@ -106,28 +106,28 @@ nc_quot@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_sqrt@c@(@ctype@ *x, @ctype@ *r)
 {
     *r = npy_csqrt@c@(*x);
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_rint@c@(@ctype@ *x, @ctype@ *r)
 {
     r->real = npy_rint@c@(x->real);
     r->imag = npy_rint@c@(x->imag);
 }
 
-void
+DL_EXPORT(void)
 nc_log@c@(@ctype@ *x, @ctype@ *r)
 {
     *r = npy_clog@c@(*x);
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_log1p@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ l = npy_hypot@c@(x->real + 1,x->imag);
@@ -136,14 +136,14 @@ nc_log1p@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_exp@c@(@ctype@ *x, @ctype@ *r)
 {
     *r = npy_cexp@c@(*x);
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_exp2@c@(@ctype@ *x, @ctype@ *r)
 {
     @ctype@ a;
@@ -153,7 +153,7 @@ nc_exp2@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_expm1@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ a = npy_exp@c@(x->real);
@@ -162,7 +162,7 @@ nc_expm1@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_pow@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
 {
     npy_intp n;
@@ -235,7 +235,7 @@ nc_pow@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
 }
 
 
-void
+DL_EXPORT(void)
 nc_prodi@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ xr = x->real;
@@ -245,7 +245,7 @@ nc_prodi@c@(@ctype@ *x, @ctype@ *r)
 }
 
 
-void
+DL_EXPORT(void)
 nc_acos@c@(@ctype@ *x, @ctype@ *r)
 {
     /*
@@ -263,7 +263,7 @@ nc_acos@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_acosh@c@(@ctype@ *x, @ctype@ *r)
 {
     /*
@@ -282,7 +282,7 @@ nc_acosh@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_asin@c@(@ctype@ *x, @ctype@ *r)
 {
     /*
@@ -326,7 +326,7 @@ nc_asin@c@(@ctype@ *x, @ctype@ *r)
 }
 
 
-void
+DL_EXPORT(void)
 nc_asinh@c@(@ctype@ *x, @ctype@ *r)
 {
     /*
@@ -364,7 +364,7 @@ nc_asinh@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_atan@c@(@ctype@ *x, @ctype@ *r)
 {
     /*
@@ -403,7 +403,7 @@ nc_atan@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_atanh@c@(@ctype@ *x, @ctype@ *r)
 {
     /*
@@ -442,7 +442,7 @@ nc_atanh@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_cos@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ xr=x->real, xi=x->imag;
@@ -451,7 +451,7 @@ nc_cos@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_cosh@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ xr=x->real, xi=x->imag;
@@ -460,7 +460,7 @@ nc_cosh@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_log10@c@(@ctype@ *x, @ctype@ *r)
 {
     nc_log@c@(x, r);
@@ -469,7 +469,7 @@ nc_log10@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_log2@c@(@ctype@ *x, @ctype@ *r)
 {
     nc_log@c@(x, r);
@@ -478,7 +478,7 @@ nc_log2@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_sin@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ xr=x->real, xi=x->imag;
@@ -499,7 +499,7 @@ nc_sin@c@(@ctype@ x)
 }
 */
 
-void
+DL_EXPORT(void)
 nc_sinh@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ xr=x->real, xi=x->imag;
@@ -508,7 +508,7 @@ nc_sinh@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_tan@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ sr,cr,shi,chi;
@@ -529,7 +529,7 @@ nc_tan@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
-void
+DL_EXPORT(void)
 nc_tanh@c@(@ctype@ *x, @ctype@ *r)
 {
     @ftype@ si,ci,shr,chr;
@@ -558,7 +558,7 @@ nc_tanh@c@(@ctype@ *x, @ctype@ *r)
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *
  * *********************************************************************** */
 
-void
+DL_EXPORT(void)
 nc_cabs@c@(@ctype@ *x, @ftype@ *r)
 {
     *r = npy_cabs@c@(*x);

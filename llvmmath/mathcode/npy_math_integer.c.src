@@ -5,13 +5,14 @@
     date: 9/11/2012
     git hash: 75b8119f8145ab08a436ecfd7de868c6c6ba8f6d
 */
+#include "export.h"
 
 /**begin repeat
  * #TYPE = b, s, , l, ll#
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  */
 
-@type@
+DL_EXPORT(@type@)
 npy_@TYPE@abs(@type@ in)
 {
     return (in >= 0) ? in : -in;

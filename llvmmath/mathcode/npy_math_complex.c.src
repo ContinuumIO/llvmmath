@@ -34,6 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include "export.h"
 #include "npy_math_common.h"
 #include "npy_math_private.h"
 
@@ -49,21 +50,21 @@
  * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
  */
 #if !HAVE_CABS@C@
-@type@ npy_cabs@c@(@ctype@ z)
+DL_EXPORT(@type@) npy_cabs@c@(@ctype@ z)
 {
     return npy_hypot@c@(npy_creal@c@(z), npy_cimag@c@(z));
 }
 #endif
 
 #if !HAVE_CARG@C@
-@type@ npy_carg@c@(@ctype@ z)
+DL_EXPORT(@type@) npy_carg@c@(@ctype@ z)
 {
     return npy_atan2@c@(npy_cimag@c@(z), npy_creal@c@(z));
 }
 #endif
 
 #if !HAVE_CEXP@C@
-@ctype@ npy_cexp@c@(@ctype@ z)
+DL_EXPORT(@ctype@) npy_cexp@c@(@ctype@ z)
 {
     @type@ x, c, s;
     @type@ r, i;
@@ -124,7 +125,7 @@
 #endif
 
 #if !HAVE_CLOG@C@
-@ctype@ npy_clog@c@(@ctype@ z)
+DL_EXPORT(@ctype@) npy_clog@c@(@ctype@ z)
 {
     return npy_cpack@c@(npy_log@c@ (npy_cabs@c@ (z)), npy_carg@c@ (z));
 }
@@ -135,7 +136,7 @@
 /* We risk spurious overflow for components >= DBL_MAX / (1 + sqrt(2)). */
 #define THRESH  (@TMAX@ / (1 + NPY_SQRT2@c@))
 
-@ctype@ npy_csqrt@c@(@ctype@ z)
+DL_EXPORT(@ctype@) npy_csqrt@c@(@ctype@ z)
 {
     @ctype@ result;
     @type@ a, b;
@@ -199,7 +200,7 @@
 #endif
 
 #if !HAVE_CPOW@C@
-@ctype@ npy_cpow@c@ (@ctype@ x, @ctype@ y)
+DL_EXPORT(@ctype@) npy_cpow@c@ (@ctype@ x, @ctype@ y)
 {
     @ctype@ b;
     @type@ br, bi, yr, yi;
@@ -215,7 +216,7 @@
 #endif
 
 #if !HAVE_CCOS@C@
-@ctype@ npy_ccos@c@(@ctype@ z)
+DL_EXPORT(@ctype@) npy_ccos@c@(@ctype@ z)
 {
     @type@ x, y;
     x = npy_creal@c@(z);
@@ -225,7 +226,7 @@
 #endif
 
 #if !HAVE_CSIN@C@
-@ctype@ npy_csin@c@(@ctype@ z)
+DL_EXPORT(@ctype@) npy_csin@c@(@ctype@ z)
 {
     @type@ x, y;
     x = npy_creal@c@(z);
@@ -251,7 +252,7 @@
  * #KIND = CABS,CARG#
  */
 #if HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@ctype@ z)
+DL_EXPORT(@type@) npy_@kind@@c@(@ctype@ z)
 {
     __@ctype@_to_c99_cast z1 = {z};
     return @kind@@c@(z1.c99_z);
@@ -264,7 +265,7 @@
  * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN#
  */
 #if HAVE_@KIND@@C@
-@ctype@ npy_@kind@@c@(@ctype@ z)
+DL_EXPORT(@ctype@) npy_@kind@@c@(@ctype@ z)
 {
     __@ctype@_to_c99_cast z1 = {z};
     __@ctype@_to_c99_cast ret;
@@ -279,7 +280,7 @@
  * #KIND = CPOW#
  */
 #if HAVE_@KIND@@C@
-@ctype@ npy_@kind@@c@(@ctype@ x, @ctype@ y)
+DL_EXPORT(@ctype@) npy_@kind@@c@(@ctype@ x, @ctype@ y)
 {
     __@ctype@_to_c99_cast xcast = {x};
     __@ctype@_to_c99_cast ycast = {y};

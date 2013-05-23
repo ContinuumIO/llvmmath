@@ -59,6 +59,7 @@
  * is preserved.
  * ====================================================
  */
+#include "export.h"
 #include "npy_math_private.h"
 
 /*
@@ -69,7 +70,7 @@
 
 /* Original code by Konrad Hinsen.  */
 #if !HAVE_EXPM1
-double npy_expm1(double x)
+DL_EXPORT(double) npy_expm1(double x)
 {
     const double u = npy_exp(x);
 
@@ -84,7 +85,7 @@ double npy_expm1(double x)
 #endif
 
 #if !HAVE_LOG1P
-double npy_log1p(double x)
+DL_EXPORT(double) npy_log1p(double x)
 {
     const double u = 1. + x;
     const double d = u - 1.;
@@ -106,7 +107,7 @@ double npy_log1p(double x)
 #if !HAVE_ATAN2
 /* XXX: we should have this in npy_math.h */
 #define NPY_DBL_EPSILON 1.2246467991473531772E-16
-double npy_atan2(double y, double x)
+DL_EXPORT(double) npy_atan2(double y, double x)
 {
     npy_int32 k, m, iy, ix, hx, hy;
     npy_uint32 lx,ly;
@@ -185,7 +186,7 @@ double npy_atan2(double y, double x)
 #endif
 
 #if !HAVE_HYPOT
-double npy_hypot(double x, double y)
+DL_EXPORT(double) npy_hypot(double x, double y)
 {
     double yx;
 
@@ -216,14 +217,14 @@ double npy_hypot(double x, double y)
 #endif
 
 #if !HAVE_ACOSH
-double npy_acosh(double x)
+DL_EXPORT(double) npy_acosh(double x)
 {
     return 2*npy_log(npy_sqrt((x + 1.0)/2) + npy_sqrt((x - 1.0)/2));
 }
 #endif
 
 #if !HAVE_ASINH
-double npy_asinh(double xx)
+DL_EXPORT(double) npy_asinh(double xx)
 {
     double x, d;
     int sign;
@@ -245,7 +246,7 @@ double npy_asinh(double xx)
 #endif
 
 #if !HAVE_ATANH
-double npy_atanh(double x)
+DL_EXPORT(double) npy_atanh(double x)
 {
     if (x > 0) {
         return -0.5*npy_log1p(-2.0*x/(1.0 + x));
@@ -257,7 +258,7 @@ double npy_atanh(double x)
 #endif
 
 #if !HAVE_RINT
-double npy_rint(double x)
+DL_EXPORT(double) npy_rint(double x)
 {
     double y, r;
 
@@ -280,21 +281,21 @@ double npy_rint(double x)
 #endif
 
 #if !HAVE_TRUNC
-double npy_trunc(double x)
+DL_EXPORT(double) npy_trunc(double x)
 {
     return x < 0 ? npy_ceil(x) : npy_floor(x);
 }
 #endif
 
 #if !HAVE_EXP2
-double npy_exp2(double x)
+DL_EXPORT(double) npy_exp2(double x)
 {
     return npy_exp(NPY_LOGE2*x);
 }
 #endif
 
 #if !HAVE_LOG2
-double npy_log2(double x)
+DL_EXPORT(double) npy_log2(double x)
 {
     return NPY_LOG2E*npy_log(x);
 }
@@ -338,7 +339,7 @@ double npy_log2(double x)
 #undef @kind@@c@
 #endif
 #if !HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x)
+DL_EXPORT(@type@) npy_@kind@@c@(@type@ x)
 {
     return (@type@) npy_@kind@((double)x);
 }
@@ -354,7 +355,7 @@ double npy_log2(double x)
 #undef @kind@@c@
 #endif
 #if !HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x, @type@ y)
+DL_EXPORT(@type@) npy_@kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) npy_@kind@((double)x, (double) y);
 }
@@ -365,7 +366,7 @@ double npy_log2(double x)
 #undef modf@c@
 #endif
 #if !HAVE_MODF@C@
-@type@ npy_modf@c@(@type@ x, @type@ *iptr)
+DL_EXPORT(@type@) npy_modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
     double y = npy_modf((double)x, &niptr);
@@ -393,7 +394,7 @@ double npy_log2(double x)
  *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
  */
 #if HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x)
+DL_EXPORT(@type@) npy_@kind@@c@(@type@ x)
 {
     return @kind@@c@(x);
 }
@@ -406,7 +407,7 @@ double npy_log2(double x)
  * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
  */
 #if HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x, @type@ y)
+DL_EXPORT(@type@) npy_@kind@@c@(@type@ x, @type@ y)
 {
     return @kind@@c@(x, y);
 }
@@ -414,7 +415,7 @@ double npy_log2(double x)
 /**end repeat1**/
 
 #if HAVE_MODF@C@
-@type@ npy_modf@c@(@type@ x, @type@ *iptr)
+DL_EXPORT(@type@) npy_modf@c@(@type@ x, @type@ *iptr)
 {
     return modf@c@(x, iptr);
 }
@@ -438,27 +439,27 @@ double npy_log2(double x)
 #define RAD2DEG  (180.0@c@/NPY_PI@c@)
 #define DEG2RAD  (NPY_PI@c@/180.0@c@)
 
-@type@ npy_rad2deg@c@(@type@ x)
+DL_EXPORT(@type@) npy_rad2deg@c@(@type@ x)
 {
     return x*RAD2DEG;
 }
 
-@type@ npy_deg2rad@c@(@type@ x)
+DL_EXPORT(@type@) npy_deg2rad@c@(@type@ x)
 {
     return x*DEG2RAD;
 }
 
-@type@ npy_log2_1p@c@(@type@ x)
+DL_EXPORT(@type@) npy_log2_1p@c@(@type@ x)
 {
     return LOG2E*npy_log1p@c@(x);
 }
 
-@type@ npy_exp2_m1@c@(@type@ x)
+DL_EXPORT(@type@) npy_exp2_m1@c@(@type@ x)
 {
     return npy_expm1@c@(LOGE2*x);
 }
 
-@type@ npy_logaddexp@c@(@type@ x, @type@ y)
+DL_EXPORT(@type@) npy_logaddexp@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
@@ -473,7 +474,7 @@ double npy_log2(double x)
     }
 }
 
-@type@ npy_logaddexp2@c@(@type@ x, @type@ y)
+DL_EXPORT(@type@) npy_logaddexp2@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
