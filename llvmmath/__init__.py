@@ -8,6 +8,8 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+logging.getLogger("llvmpy").setLevel(logging.WARN)
+
 from testrunner import test
 from build import have_llvm_asm
 from libs import get_default_math_lib, get_mathlib_so, get_mathlib_bc
