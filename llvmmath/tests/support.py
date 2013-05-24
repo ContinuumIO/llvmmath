@@ -57,9 +57,6 @@ def call_complex_byref(f, *inputs):
     """
     Call complex function by reference, e.g. void sin(complex *in, complex *out)
     """
-    if f.restype is not None:
-        return call_complex_byval_return(f, input)
-
     c_resty = f.argtypes[1]._type_ # get base type from pointer argtype
     c_result = c_resty(0)
 
@@ -76,13 +73,6 @@ def call_complex_byref(f, *inputs):
 
     if issubclass(c_resty, ctypes.Structure):
         return complex(c_result.e0, c_result.e1)
-    return c_resty
-
-def call_complex_byval_return(f, input):
-    "Call something like float abs(complex)"
-    c_argty = f.argtypes[0]._type_ # get base type from pointer argtype
-    c_input = c_argty(input.real, input.imag)
-    c_result = f(ctypes.pointer(c_input))
     return c_result
 
 #===------------------------------------------------------------------===

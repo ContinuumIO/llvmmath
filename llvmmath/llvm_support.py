@@ -93,8 +93,9 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
         # Create a class definition for the type. It is critical that this
         # Take place before the handling of members to avoid issues with
         # self-referential data structures
+        modname = getattr(py_module, '__name__', '<no module>')
         ctype = type(ctypes.Structure)(struct_name, (ctypes.Structure,),
-                                       { '__module__' : py_module.__name__ })
+                                       { '__module__' : modname })
 
         if py_module:
             setattr(py_module, struct_name, ctype)

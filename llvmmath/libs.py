@@ -59,12 +59,11 @@ class CtypesLibrary(Library):
 
     def get_ctypes_symbol(self, name, signature):
         ptr = self.get_symbol(name, signature)
-        assert ptr is not None
+        assert ptr is not None, (name, signature)
         native_sig = self.calling_convention(signature)
-
         to_ctypes = llvm_support.map_llvm_to_ctypes
 
-        sym = ctypes.cast(ptr, ctypes.c_void_p).value
+        sym = ctypes.cast(ptr, ctypes.CFUNCTYPE(None))
         sym.restype = to_ctypes(native_sig.restype)
         sym.argtypes = list(map(to_ctypes, native_sig.argtypes))
         return sym
@@ -75,9 +74,7 @@ class LLVMLibrary(Library):
 
     def get_ctypes_symbol(self, name, signature):
         lfunc = self.get_symbol(name, signature)
-        assert lfunc is not None
-        assert lfunc.type.pointee == self.calling_convention(signature)
-
+        assert lfunc is not None and lfunc.module
         engine = llvm.ee.ExecutionEngine.new(lfunc.module)
         return llvm_support.get_ctypes_wrapper(lfunc, engine)
 
