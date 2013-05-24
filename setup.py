@@ -118,7 +118,8 @@ setup(
     packages=find_packages(exclude=exclude_packages),
     package_data={
         '': ['*.md', '*.cfg'],
-        'llvmmath.mathcode': ['*.c', '*.h', '*.src', 'README', 'private/*.h'],
+        'llvmmath': ['*.txt'],
+        'llvmmath.mathcode': ['*.c', '*.h', '*.src', '*.txt', 'README', 'private/*.h'],
     },
     # data_files=[('llvmmath', ['logging.conf'])],
     ext_modules=[
