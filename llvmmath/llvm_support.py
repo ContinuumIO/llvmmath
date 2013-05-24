@@ -8,6 +8,7 @@ Originally adapated from Bitey, blaze/blir/bind.py.
 from __future__ import print_function, division, absolute_import
 
 from functools import partial
+import logging
 import ctypes
 import io
 import os
@@ -16,6 +17,8 @@ import sys
 from llvm.core import Module
 import llvm.core
 import llvm.ee
+
+logger = logging.getLogger(__name__)
 
 PY3 = sys.version_info[0] >= 3
 
@@ -90,29 +93,29 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
         else:
             names = [ "e"+str(n) for n in range(llvm_type.element_count) ]
 
-        # Create a class definition for the type. It is critical that this
-        # Take place before the handling of members to avoid issues with
-        # self-referential data structures
-        modname = getattr(py_module, '__name__', '<no module>')
-        ctype = type(ctypes.Structure)(struct_name, (ctypes.Structure,),
-                                       { '__module__' : modname })
+        if hasattr(py_module, struct_name):
+            return getattr(py_module, struct_name)
+
+        if py_module:
+            # avoid recursion on self-referential fields
+            setattr(py_module, struct_name, None)
+
+        class ctype(ctypes.Structure):
+            # We can't set fields afterwards: "TypeError: fields are final" in py3
+            _fields_ = [ (name, map_llvm_to_ctypes(elem, py_module))
+                             for name, elem in zip(names, llvm_type.elements) ]
 
         if py_module:
             setattr(py_module, struct_name, ctype)
-
-        # Resolve the structure fields
-        fields = [ (name, map_llvm_to_ctypes(elem, py_module))
-                   for name, elem in zip(names, llvm_type.elements) ]
-
-        # Set the fields member of the type last.  The order is critical
-        # to deal with self-referential structures.
-        setattr(ctype, '_fields_', fields)
 
     elif kind == llvm.core.TYPE_VECTOR:
         return map_llvm_to_ctypes(llvm_type.element, py_module) * llvm_type.count
 
     else:
-        raise TypeError("Unknown type %s" % llvm_type)
+        if py_module:
+            logger.warn("Unknown type: %s" % llvm_type)
+            return None
+        raise TypeError("Unknown type: %s" % llvm_type)
 
     return ctype
 

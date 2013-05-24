@@ -55,3 +55,5 @@ def make_complex_func(mod, ty, name):
     bb = f.append_basic_block('entry')
     b = Builder.new(bb)
     return f, b
+
+test_complex_abi_byref()

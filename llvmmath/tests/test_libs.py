@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import
 
-import ctypes
 from functools import partial
 
 import llvm.core as lc
@@ -18,9 +17,9 @@ np_complexes = [np.complex64, np.complex128, getattr(np, 'complex256',
                                                      np.complex128)]
 
 npy_typemap = {
-    ltypes.integral: np_integral,
-    ltypes.floating: np_floating,
-    ltypes.complexes: np_complexes,
+    tuple(map(str, ltypes.integral)): np_integral,
+    tuple(map(str, ltypes.floating)): np_floating,
+    tuple(map(str, ltypes.complexes)): np_complexes,
 }
 
 lower, upper = 1, 10
@@ -77,9 +76,9 @@ def run(c_func, name, sig, dtype):
 # ______________________________________________________________________
 
 def run_from_types(library, types):
-    for name, signatures in library.symbols.iteritems():
-        sample_sig = signatures.keys()[0]
-        for ty, dtype in zip(types, npy_typemap[types]):
+    for name, signatures in library.symbols.items():
+        sample_sig = list(signatures)[0]
+        for ty, dtype in zip(types, npy_typemap[tuple(map(str, types))]):
             sig = ltypes.Signature(ty, [ty] * len(sample_sig.argtypes))
             if sig in signatures:
                 ctypes_func = library.get_ctypes_symbol(name, sig)

@@ -6,7 +6,7 @@ from io import StringIO
 from .. import parsesyms, symbols, libs
 from .. import ltypes as l
 
-testfuncs = """
+testfuncs = u"""
 complex pow(complex, int)
 int abs(int)
 float abs(float)

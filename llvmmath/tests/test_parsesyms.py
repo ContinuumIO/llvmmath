@@ -6,7 +6,7 @@ from io import StringIO
 from .. import parsesyms
 from ..parsesyms import Symbol
 
-testfuncs = """
+testfuncs = u"""
 float sin(float)
 complex pow(complex, int)
 int abs(int)
@@ -14,7 +14,7 @@ float abs(float)
 float abs(complex)
 """
 
-testcomments = """
+testcomments = u"""
 # comment1
 #   comment2
     # comment3

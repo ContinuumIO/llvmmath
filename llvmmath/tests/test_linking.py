@@ -7,11 +7,12 @@ import math
 import cmath
 
 from .. import ltypes, linking, libs, have_llvm_asm
-from nose_parameterized import parameterized
 from . import support
+from .support import parameterized
 
 import numpy as np
 from llvm.core import *
+from nose.tools import nottest
 
 # ______________________________________________________________________
 
@@ -87,6 +88,7 @@ def make_func(ctx, defname, callname, ty, nargs=1, byref=False):
 # Tests
 #===------------------------------------------------------------------===
 
+@nottest
 @parameterized(make_contexts())
 def test_link_real(ctx):
     ctx.mkbyval('mysinf', sinname, ltypes.l_float)
@@ -104,6 +106,7 @@ def test_link_real(ctx):
 def _base_type(ty):
     return ty._type_._fields_[0][1] # Get the base type of a complex *
 
+@nottest
 @parameterized(make_contexts())
 def test_link_complex(ctx):
     ctx.mkbyref('mycsinf', sinname, ltypes.l_complex64)
@@ -134,6 +137,7 @@ def test_link_complex(ctx):
 
 # ______________________________________________________________________
 
+@nottest
 @parameterized(make_contexts())
 def test_link_binary(ctx):
     ty = ltypes.l_complex128
@@ -154,6 +158,7 @@ def test_link_binary(ctx):
 
 # ______________________________________________________________________
 
+@nottest
 @parameterized(make_contexts())
 def test_link_external(ctx):
     pass

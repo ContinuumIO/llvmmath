@@ -8,6 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 import types
 import ctypes
+import unittest
 import functools
 import collections
 
@@ -62,13 +63,12 @@ def call_complex_byref(f, *inputs):
 
     c_args = build_complex_args([pty._type_ for pty in f.argtypes], *inputs)
     c_args.append(c_result)
-    c_args = map(ctypes.pointer, c_args)
+    c_args = list(map(ctypes.pointer, c_args))
 
     # What? ArgumentError: argument 3: <type 'exceptions.TypeError'>: expected
     # LP_ instance instead of LP_
     f.argtypes = [type(a) for a in c_args]
     # -- end hack
-
     f(*c_args)
 
     if issubclass(c_resty, ctypes.Structure):
@@ -106,3 +106,40 @@ def skip_if(cond, msg="Skipping"):
             return f(*args, **kwargs)
         return wrapper
     return dec
+
+def parameterized(parameters):
+    """
+    @parameterized([['foo'], ['bar']])
+    def test_func(foo_or_bar):
+        print foo_or_bar # prints 'foo' or 'bar'
+
+    Generates a unittest TestCase in the function's global scope named
+    'test_func_testcase' with parametrized test methods.
+
+    ':return: The original function
+    """
+    def decorator(func):
+        class TestCase(unittest.TestCase):
+            pass
+
+        TestCase.__name__ = func.__name__
+
+        for i, parameter in enumerate(parameters):
+            name = '%s_%d' % (func.__name__, i)
+
+            def testfunc(self, parameter=parameter):
+                print("invoking....", parameter)
+                return func(*parameter)
+
+            testfunc.__name__ = name
+            if func.__doc__:
+                testfunc.__doc__ = func.__doc__.replace(func.__name__, name)
+
+            # func.func_globals[name] = unittest.FunctionTestCase(testfunc)
+            setattr(TestCase, name, testfunc)
+
+
+        func.__globals__[func.__name__ + '_testcase'] = TestCase
+        return func
+
+    return decorator

@@ -6,12 +6,11 @@ Support for math as a postpass on LLVM IR.
 
 from __future__ import print_function, division, absolute_import
 
-import types
 import ctypes.util
 from os.path import join, dirname, exists
 import collections
 
-from . import symbols, build, ltypes, naming, llvm_support, callconv
+from . import build, ltypes, naming, llvm_support, callconv
 from .utils import cached
 from .symbols import CtypesMath, LLVMMath, get_symbols
 
