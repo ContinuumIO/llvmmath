@@ -107,6 +107,10 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
         # Set the fields member of the type last.  The order is critical
         # to deal with self-referential structures.
         setattr(ctype, '_fields_', fields)
+
+    elif kind == llvm.core.TYPE_VECTOR:
+        return map_llvm_to_ctypes(llvm_type.element, py_module) * llvm_type.count
+
     else:
         raise TypeError("Unknown type %s" % llvm_type)
 
