@@ -20,4 +20,6 @@ Installing
 Documentation
 =============
 
-[Documentation](docs/index.rst)
+[Available Symbols](docs/symbols.rst)
+
+[Public API](docs/api.rst)
