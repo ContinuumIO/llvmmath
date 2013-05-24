@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import
 
-from StringIO import StringIO
+from io import StringIO
 
 from .. import parsesyms
 from ..parsesyms import Symbol

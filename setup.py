@@ -4,7 +4,6 @@ from __future__ import print_function, division, absolute_import
 import os
 import sys
 import logging
-from itertools import imap, ifilter
 from fnmatch import fnmatchcase
 from os.path import join, dirname, abspath, isfile
 from distutils.util import convert_path
@@ -15,9 +14,12 @@ from llvmmath import build
 
 import numpy
 
-# python 3
-map = lambda *args: list(imap(*args))
-filter = lambda *args: list(ifilter(*args))
+py3 = sys.version_info[0] >= 3
+if py3:
+    ifilter = filter
+    imap = map
+    map = lambda *args: list(imap(*args))
+    filter = lambda *args: list(ifilter(*args))
 
 logger = logging.getLogger('llvmmath')
 
