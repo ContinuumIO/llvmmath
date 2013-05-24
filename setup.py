@@ -4,6 +4,7 @@ from __future__ import print_function, division, absolute_import
 import os
 import sys
 import logging
+import subprocess
 from fnmatch import fnmatchcase
 from os.path import join, dirname, abspath, isfile
 from distutils.util import convert_path
@@ -95,7 +96,11 @@ else:
     targets = []
 
 config = build.mkconfig(build.default_config, targets=targets)
-llvmmath.build.build(config)
+llvmmath.build.build_source(config)
+try:
+    llvmmath.build.build_targets(config)
+except subprocess.CalledProcessError, e:
+    logging.exception(e)
 
 #===------------------------------------------------------------------===
 # setup
