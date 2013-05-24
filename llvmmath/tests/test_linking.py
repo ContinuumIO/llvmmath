@@ -124,7 +124,7 @@ def test_link_complex(ctx):
 
     typeof = lambda f: _base_type(f.argtypes[0])
     assert typeof(m.mycsinf) == ctypes.c_float
-    assert typeof(m.mycsin) == ctypes.c_double
+    assert typeof(m.mycsin) == ctypes.c_double, typeof(m.mycsin)
     assert typeof(m.mycsinl) in (ctypes.c_double, ctypes.c_longdouble)
 
     r1 = call(m.mycsinf, input)

@@ -70,40 +70,26 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
         #     python: Type.cpp:580: llvm::StringRef llvm::StructType::getName()
         #                           const: Assertion `!isLiteral() &&
         #                           "Literal structs never have names"' failed.
-        if not llvm_type._ptr.hasName():
-            struct_name = ''
-        else:
-            struct_name = llvm_type.name.split('.')[-1]
-            if not PY3:
-                struct_name = struct_name.encode('ascii')
+        struct_name = str(llvm_type)
 
         # If the named type is already known, return it
-        if py_module and struct_name:
-            struct_type = getattr(py_module, struct_name, None)
-        else:
-            struct_type = None
-
-        if struct_type is not None and issubclass(struct_type, ctypes.Structure):
-            return struct_type
-
-        # If there is an object with the name of the structure already present and it has
-        # the field names specified, use those names to help out
-        if hasattr(struct_type, '_fields_'):
-            names = struct_type._fields_
-        else:
-            names = [ "e"+str(n) for n in range(llvm_type.element_count) ]
-
         if hasattr(py_module, struct_name):
-            return getattr(py_module, struct_name)
+            return getattr(py_module, struct_name, None)
+
+        names = [ "e" + str(n) for n in range(llvm_type.element_count) ]
 
         if py_module:
             # avoid recursion on self-referential fields
             setattr(py_module, struct_name, None)
 
+        fields = [(name, map_llvm_to_ctypes(elem, py_module))
+                      for name, elem in zip(names, llvm_type.elements)]
+        if any(f[1] is None for f in fields):
+            return None
+
         class ctype(ctypes.Structure):
             # We can't set fields afterwards: "TypeError: fields are final" in py3
-            _fields_ = [ (name, map_llvm_to_ctypes(elem, py_module))
-                             for name, elem in zip(names, llvm_type.elements) ]
+            _fields_ = fields
 
         if py_module:
             setattr(py_module, struct_name, ctype)
