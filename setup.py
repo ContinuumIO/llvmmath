@@ -99,7 +99,7 @@ config = build.mkconfig(build.default_config, targets=targets)
 llvmmath.build.build_source(config)
 try:
     llvmmath.build.build_targets(config)
-except subprocess.CalledProcessError, e:
+except subprocess.CalledProcessError as e:
     logging.exception(e)
 
 #===------------------------------------------------------------------===
