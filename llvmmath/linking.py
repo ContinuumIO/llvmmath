@@ -68,6 +68,8 @@ def link_complex_llvm(lfunc_dst, lfunc_src):
         name = 'llvmmath.complexwrapper.%s' % (lfunc_src.name,)
         lfunc_dst = complex_support.create_val2ref_wrapper(
             lfunc_dst, name, lfunc_src.type.pointee)
+        assert (lfunc_dst.module is lfunc_src.module)
+        lfunc_dst.linkage = lc.LINKAGE_LINKONCE_ODR
     else:
         raise ValueError(
             "Incorrect signature for %s (got '%s', need '%s')" % (
@@ -136,7 +138,7 @@ class LLVMLinker(Linker):
         lfunc_dst = module.get_function_named(lfunc_dst.name)
         v = lfunc_src._ptr
         if lfunc_src.type != lfunc_dst.type:
-            lfunc_dst = link_complex_llvm(lfunc_dst, lfunc_src)
+            link_complex_llvm(lfunc_dst, lfunc_src)
         else:
             v.replaceAllUsesWith(lfunc_dst._ptr)
 
