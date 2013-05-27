@@ -123,6 +123,10 @@ class Linker(object):
         "Optimize after linking (inlining, DCE, etc)"
 
 class LLVMLinker(Linker):
+    """
+    Resolve abstract math calls to calls from mathcode.s and link mathcode.s
+    into module.
+    """
 
     def setup(self, engine, module, library):
         module.link_in(library.module, preserve=True)
@@ -140,11 +144,18 @@ class LLVMLinker(Linker):
         "Try to eliminate unused functions"
         for lfunc_math in library.module.functions:
             lfunc = module.get_function_named(lfunc_math.name)
-            # lfunc.linkage = lc.LINKAGE_INTERNAL
-            if not lfunc.uses:
-                # global_val = module.get_global_variable_named(lfunc_math.name)
+            # Don't use 'lfunc.uses', it may break when we have a constant
+            # expression as user:  TypeError: Downcast from llvm::User to
+            # llvm::ConstantExpr is not supported
+            if not lfunc._ptr.list_use():
                 lfunc.delete()
-        #
+            else:
+                lfunc.linkage = lc.LINKAGE_LINKONCE_ODR
+
+        for global_val in library.module.global_variables:
+            gv = module.get_global_variable_named(global_val.name)
+            gv.linkage = lc.LINKAGE_LINKONCE_ODR
+
         # fpm = lp.PassManager.new()
         # fpm.add(lp.PASS_GLOBALDCE)
         # fpm.run(module)
@@ -160,7 +171,9 @@ class ExternalLibraryLinker(Linker):
 
         engine.add_global_mapping(lfunc, ptr)
 
-# ______________________________________________________________________
+#===------------------------------------------------------------------===
+# Linking
+#===------------------------------------------------------------------===
 
 def get_linker(lib):
     "Get linker for the given math library"
