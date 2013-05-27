@@ -12,6 +12,8 @@ llvmmath/mathcode/funcs.inc
 llvmmath/mathcode/npy_math_integer.c
 llvmmath/mathcode/npy_math_floating.c
 llvmmath/mathcode/npy_math_complex.c
+llvmmath/mathcode/ieee754.c
+llvmmath/mathcode/private/config.h
 
 .idea/
 build/
