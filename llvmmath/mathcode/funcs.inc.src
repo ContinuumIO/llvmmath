@@ -14,8 +14,8 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 // #include "npy_pycompat.h"
 #include <Python.h>
+#include <numpy/npy_common.h>
 #include "npy_math.h"
-#include "numpy/npy_common.h"
 
 /*
  *****************************************************************************
