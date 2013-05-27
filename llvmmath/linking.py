@@ -140,9 +140,10 @@ class LLVMLinker(Linker):
         "Try to eliminate unused functions"
         for lfunc_math in library.module.functions:
             lfunc = module.get_function_named(lfunc_math.name)
-            # lfunc.linkage = lc.LINKAGE_INTERNAL
-            if not lfunc.uses:
-                # global_val = module.get_global_variable_named(lfunc_math.name)
+            # Don't use 'lfunc.uses', it may break when we have a constant
+            # expression as user:  TypeError: Downcast from llvm::User to
+            # llvm::ConstantExpr is not supported
+            if not lfunc._ptr.list_use():
                 lfunc.delete()
         #
         # fpm = lp.PassManager.new()
