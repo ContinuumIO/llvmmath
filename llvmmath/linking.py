@@ -149,7 +149,7 @@ class LLVMLinker(Linker):
             # llvm::ConstantExpr is not supported
             if not lfunc._ptr.list_use():
                 lfunc.delete()
-            else:
+            elif not lfunc.is_declaration:
                 lfunc.linkage = lc.LINKAGE_LINKONCE_ODR
 
         for global_val in library.module.global_variables:
