@@ -168,7 +168,7 @@ class ExternalLibraryLinker(Linker):
 
     def link(self, engine, module, library, lfunc, ptr):
         "Link the math by adding pointers to functions in external code"
-        is_complex = lfunc.type.pointee.return_type.kind == lc.TYPE_STRUCT
+        is_complex = lfunc.args[0].type.kind == lc.TYPE_STRUCT
         if is_complex:
             lfunc = link_complex_external(lfunc, module)
 
