@@ -104,6 +104,7 @@ def link_complex_external(lfunc, module):
 
     lfunc_wrapper = complex_support.create_val2ref_wrapper(
         wrapped, wrapper_name, lfunc.type.pointee)
+    lfunc_wrapper.linkage = lc.LINKAGE_LINKONCE_ODR
 
     lfunc._ptr.replaceAllUsesWith(lfunc_wrapper._ptr)
     return wrapped
