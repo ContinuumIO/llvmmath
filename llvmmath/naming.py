@@ -10,7 +10,7 @@ from . import ltypes
 from llvm.core import *
 
 # ______________________________________________________________________
-# Naming
+# Default naming of external math functions
 
 _ints = {
     ltypes.l_longlong.width: 'll',

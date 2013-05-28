@@ -31,7 +31,7 @@ typemap = {
 class MathLib(object):
     def __init__(self, libm, mangler=naming.mathname, have_symbol=None):
         """
-        :param mangler: (name, llvm_type) -> math_name
+        :param mangler: (name, Signature) -> math_name
         """
         self.libm = libm
         self.mangle = mangler

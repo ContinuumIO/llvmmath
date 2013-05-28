@@ -92,11 +92,11 @@ If we now inspect our module we should find something along the lines of:
     define void @my_func({ float, float }*) {
     entry:
       %sin_arg = load { float, float }* %0
-      %sin_result = call { float, float } @llvmmath.complexwrapper.my_custom_sin6({ float, float } %2)
+      %sin_result = call { float, float } @llvmmath.complexwrapper.my_custom_sin({ float, float } %2)
       ...
     }
 
-    define { float, float } @llvmmath.complexwrapper.my_custom_sin6({ float, float }) {
+    define { float, float } @llvmmath.complexwrapper.my_custom_sin({ float, float }) {
     entry:
       %result = alloca { float, float }
       %arg = alloca { float, float }
@@ -117,6 +117,11 @@ by reference to the actual implementation. We pass complex numbers by
 reference to avoid ABI problems. Note that the IR above may look a little
 different when the LLVM assembly of the math implementation is not available
 (if clang is not installed or not working).
+
+.. NOTE:: Functions with different signatures must have different function names (i.e.,
+          they must be different function symbols).
+          E.g. if you're calling ``sin(double)`` and ``sin(float)``, you need a replacement
+          scheme that maps ``{ 'myproject.double.sin': 'sin', 'myproject.float.sin': 'sin' }``.
 
 Use outside of Python
 ---------------------
