@@ -25,10 +25,8 @@ logger = logging.getLogger(__name__)
 
 # ______________________________________________________________________
 
-_shared_endings = { 'win': '.pyd', 'dar': '.so', 'default': ".so", }
-
 def find_shared_ending():
-    return _shared_endings.get(sys.platform[:3], _shared_endings['default'])
+    return sysconfig.get_config_var('SO')
 
 root = dirname(__file__)
 mathcode = join(root, 'mathcode')
