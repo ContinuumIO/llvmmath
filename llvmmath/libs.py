@@ -6,6 +6,7 @@ Support for math as a postpass on LLVM IR.
 
 from __future__ import print_function, division, absolute_import
 
+import os
 import ctypes.util
 from os.path import join, dirname, exists
 import collections
@@ -139,7 +140,8 @@ def get_mathlib_as_ctypes():
     dylib = 'mathcode' + build.find_shared_ending()
     dylib = join(root, 'mathcode', dylib)
     if not exists(dylib):
-        raise OSError("File not found: " + dylib)
+        files = os.listdir(dirname(dylib))
+        raise OSError("File not found: %s. Files: %s" % (dylib, files))
     llvmmath = ctypes.CDLL(dylib)
     return llvmmath
 
