@@ -13,6 +13,7 @@ from __future__ import print_function, division, absolute_import
 
 import os, sys
 import numpy
+from os.path import join, dirname, abspath
 
 from nose.tools import nottest
 
@@ -55,5 +56,5 @@ def test(verbosity=1, xunitfile=None, exit=False):
                     '--verbosity=%d' % verbosity,
                     '--with-xunit',
                     '--xunit-file=%s' % xunitfile,
-                    os.path.join(os.path.dirname(__file__), 'tests')],
+                    join(dirname(abspath(__file__)), 'tests')],
                  exit=exit)

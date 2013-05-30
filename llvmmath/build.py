@@ -26,7 +26,10 @@ logger = logging.getLogger(__name__)
 # ______________________________________________________________________
 
 def find_shared_ending():
-    return sysconfig.get_config_var('SO')
+    soabi = sysconfig.get_config_var('SOABI')
+    so    = sysconfig.get_config_var('SO')
+    _, _, so = so.rpartition('.')
+    return '.%s.%s' % (soabi, so)
 
 root = dirname(__file__)
 mathcode = join(root, 'mathcode')
