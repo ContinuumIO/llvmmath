@@ -77,10 +77,12 @@ def run_2to3():
     # need to convert sources to Py3 on installation
     fixes = 'dict imports imports2 unicode ' \
             'xrange itertools itertools_imports long types'.split()
-    fixes = ['lib2to3.fixes.fix_' + fix
-             for fix in fixes]
+    fixes = ['lib2to3.fixes.fix_' + fix for fix in fixes]
     build_py.fixer_names = fixes
     cmdclass["build_py"] = build_py
+
+if sys.version_info[0] >= 3:
+    run_2to3()
 
 #===------------------------------------------------------------------===
 # Generate code for build
