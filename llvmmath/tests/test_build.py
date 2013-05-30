@@ -6,62 +6,40 @@ from os.path import join, dirname, abspath, exists
 import ctypes
 import types
 import math
+import tempfile
+import shutil
 
 from .. import llvm_support, build, have_llvm_asm, have_clang
 from . import support
 
-from nose.tools import nottest
-
-pkgdir = dirname(dirname(abspath(__file__)))
-mathcode = join(pkgdir, 'mathcode')
-mathcode_so  = join(mathcode, 'mathcode' + build.find_shared_ending())
-mathcode_asm = join(mathcode, 'mathcode.s')
+writable = lambda dirname: os.access(dirname, os.W_OK)
 
 # ______________________________________________________________________
 
-@nottest # disabled: this is an extension module now
-@support.skip_if(not have_clang())
-def test_build_shared():
-    "Test building and getting and using the shared library"
-    if exists(mathcode_so):
-        os.remove(mathcode_so)
-
-    config = build.mkconfig(build.default_config, targets=[build.build_shared])
-    build.build(config=config)
-    assert exists(mathcode_so)
-
-    mod = ctypes.CDLL(mathcode_so)
-    mod.npy_sin.restype = ctypes.c_double
-    mod.npy_sin.argtypes = [ctypes.c_double]
-
-    result = mod.npy_sin(ctypes.c_double(10.0))
-    expect = math.sin(10.0)
-    assert result == expect, (result, expect)
-
-# ______________________________________________________________________
-
+@support.skip_if(not writable(dirname(dirname(abspath(__file__)))))
 @support.skip_if(not have_clang())
 def test_build_llvm():
     "Test building llvm and getting and using the resulting llvm module"
-    if exists(mathcode_asm):
-        os.remove(mathcode_asm)
-
-    config = build.mkconfig(build.default_config, targets=[build.build_llvm])
-    build.build(config=config)
-    assert exists(mathcode_asm)
-
-    test_get_llvm_lib()
+    tempdir = tempfile.mkdtemp()
+    try:
+        asmfile = join(tempdir, 'mathcode.s')
+        config = build.mkconfig(build.default_config,
+                                targets=[build.build_llvm],
+                                output_dir=tempdir)
+        build.build_targets(config=config)
+        assert exists(asmfile)
+        test_get_llvm_lib(asmfile)
+    finally:
+        shutil.rmtree(tempdir)
 
 # ______________________________________________________________________
 
 @support.skip_if(not have_llvm_asm())
-def test_get_llvm_lib():
+def test_get_llvm_lib(asmfile=None):
     "Test getting the llvm lib from a clean environment"
-    if exists(mathcode_asm):
-        os.remove(mathcode_asm)
-
     lctx = support.make_llvm_context()
-    lmod = build.load_llvm_asm()
+    kwds = { 'asmfile': asmfile } if asmfile else {}
+    lmod = build.load_llvm_asm(**kwds)
     mod = types.ModuleType('llvmmod')
     llvm_support.wrap_llvm_module(lmod, lctx.engine, mod)
 

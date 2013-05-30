@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Build math C modules and compile to LLVM bitcode.
+Build math C modules and compile to LLVM assembly code.
 """
 
 from __future__ import print_function, division, absolute_import
@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 def find_shared_ending():
     soabi = sysconfig.get_config_var('SOABI')
     so    = sysconfig.get_config_var('SO')
+    if soabi is None:
+        return so
     _, _, so = so.rpartition('.')
     return '.%s.%s' % (soabi, so)
 
@@ -44,30 +46,23 @@ includes = ['-I' + abspath(dir) for dir in incdirs]
 
 def build_llvm(config):
     "Compile math library to bitcode with clang"
-    check_call([config.clang, '-O3', '-march=native',
-                '-c', 'mathcode.c', '-S', '-emit-llvm'] + includes, cwd=mathcode)
-
-def build_shared(config):
-    "Compile math library to a shared library with clang"
-    # TODO: Update for distutils (link with libpython)
-    raise NotImplementedError
-
-    check_call([config.clang, '-O3', '-march=native',
-                '-c', 'mathcode.c', '-fPIC'] + includes, cwd=mathcode)
-    check_call([config.clang, '-shared', 'mathcode.o',
-                '-o', 'mathcode' + shared_ending], cwd=mathcode)
+    outfile = join(config.output_dir, 'mathcode.s')
+    check_call([config.clang, '-O3', '-march=native', '-c', 'mathcode.c',
+                '-S', '-emit-llvm', '-o', outfile] + includes,
+               cwd=mathcode)
 
 #===------------------------------------------------------------------===
 # Config
 #===------------------------------------------------------------------===
 
-Config = namedtuple('Config', ['clang', 'conv_templ', 'targets', 'log'])
+Config = namedtuple('Config', 'clang conv_templ targets log output_dir')
 
 _default_values = {
-    'clang':      'clang',
-    'conv_templ': join(root, 'generator', 'conv_template.py'),
-    'targets':    [build_llvm], #, build_shared],
-    'log':        logger.info,
+    'clang':        'clang',
+    'conv_templ':   join(root, 'generator', 'conv_template.py'),
+    'targets':      [build_llvm], #, build_shared],
+    'log':          logger.info,
+    'output_dir':   mathcode,
 }
 
 default_config = Config(**_default_values)
@@ -109,11 +104,11 @@ def build_targets(config=default_config):
 
 # ______________________________________________________________________
 
-bitcode_fn = join(root, 'mathcode', 'mathcode.s')
+asmfile = join(root, 'mathcode', 'mathcode.s')
 
 def have_llvm_asm():
     "See whether we have compiled llvm assembly available"
-    return exists(bitcode_fn)
+    return exists(asmfile)
 
 @cached
 def have_clang():
@@ -123,11 +118,11 @@ def have_clang():
     except EnvironmentError:
         return False
 
-def load_llvm_asm():
+def load_llvm_asm(asmfile=asmfile):
     "Load the math library as an LLVM module"
-    if not exists(bitcode_fn):
+    if not exists(asmfile):
         build(mkconfig(default_config, targets=[build_llvm]))
-    return llvm.core.Module.from_assembly(open(bitcode_fn))
+    return llvm.core.Module.from_assembly(open(asmfile))
 
 if __name__ == '__main__':
     build()
