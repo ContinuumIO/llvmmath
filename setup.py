@@ -126,7 +126,7 @@ setup(
     package_data={
         '': ['*.md', '*.cfg'],
         'llvmmath': ['*.txt'],
-        'llvmmath.mathcode': ['*.c', '*.h', '*.src', '*.txt', 'README', 'private/*.h'],
+        'llvmmath.mathcode': ['*.c', '*.h', '*.s', '*.src', '*.txt', 'README', 'private/*.h'],
     },
     # data_files=[('llvmmath', ['logging.conf'])],
     ext_modules=[
