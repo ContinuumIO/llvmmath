@@ -15,11 +15,8 @@ import os, sys
 import numpy
 from os.path import join, dirname, abspath
 
-from nose.tools import nottest
-
 from llvmmath import __version__
 
-@nottest
 def test(verbosity=1, xunitfile=None, exit=False):
     """
     Runs the full numba test suite, outputing
@@ -58,3 +55,5 @@ def test(verbosity=1, xunitfile=None, exit=False):
                     '--xunit-file=%s' % xunitfile,
                     join(dirname(abspath(__file__)), 'tests')],
                  exit=exit)
+
+test.__test__ = False
