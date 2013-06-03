@@ -26,16 +26,10 @@ logger = logging.getLogger(__name__)
 # ______________________________________________________________________
 
 def find_shared_ending():
-    soabi = sysconfig.get_config_var('SOABI')
-    so    = sysconfig.get_config_var('SO')
-    if soabi is None:
-        return so
-    _, _, so = so.rpartition('.')
-    return '.%s.%s' % (soabi, so)
+    return sysconfig.get_config_var('SO')
 
 root = dirname(__file__)
 mathcode = join(root, 'mathcode')
-shared_ending = find_shared_ending()
 
 incdirs = [np.get_include(), sysconfig.get_python_inc(), join(mathcode, 'private')]
 includes = ['-I' + abspath(dir) for dir in incdirs]

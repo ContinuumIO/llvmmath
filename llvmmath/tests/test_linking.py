@@ -63,7 +63,7 @@ def make_contexts():
     contexts = [(ctx1,)]
 
     if have_llvm_asm():
-        asm = libs.get_mathlib_bc()
+        asm = libs.get_llvm_mathlib()
         asm_linker = linking.LLVMLinker()
         ctx2 = new_ctx(lib=asm, linker=asm_linker)
         contexts.append((ctx2,))

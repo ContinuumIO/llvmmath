@@ -7,6 +7,7 @@ Support for math as a postpass on LLVM IR.
 from __future__ import print_function, division, absolute_import
 
 import os
+import glob
 import ctypes.util
 from os.path import join, dirname, exists
 import collections
@@ -137,13 +138,14 @@ def get_openlibm():
 @cached
 def get_mathlib_as_ctypes():
     "Get the math library as a ctypes CDLL"
-    dylib = 'mathcode' + build.find_shared_ending()
-    dylib = join(root, 'mathcode', dylib)
-    if not exists(dylib):
-        files = os.listdir(dirname(dylib))
-        raise OSError("File not found: %s. Files: %s" % (dylib, files))
-    llvmmath = ctypes.CDLL(dylib)
-    return llvmmath
+    so = build.find_shared_ending()
+    pattern = join(root, 'mathcode', 'mathcode*' + so)
+    dylibs = glob.glob(pattern)
+    if len(dylibs) != 1 or not exists(dylibs[0]):
+        files = os.listdir(join(root, 'mathcode'))
+        raise OSError("File not found: %s. Files: %s" % (pattern, files))
+
+    return ctypes.CDLL(dylibs[0])
 
 @cached
 def get_mathlib_so():
@@ -152,8 +154,8 @@ def get_mathlib_so():
     return get_syms(CtypesMath(llvmmath, mathcode_mangler))
 
 @cached
-def get_mathlib_bc():
-    "Load the math from mathcode/ from clang-compiled bitcode"
+def get_llvm_mathlib():
+    "Load the math from mathcode/ from clang-compiled llvm assembly"
     lmath = build.load_llvm_asm()
     return get_syms(LLVMMath(lmath, mathcode_mangler))
 
@@ -163,6 +165,6 @@ def get_mathlib_bc():
 def get_default_math_lib():
     "Get the default math library implementation"
     if build.have_llvm_asm():
-        return get_mathlib_bc()
+        return get_llvm_mathlib()
     else:
         return get_mathlib_so()
