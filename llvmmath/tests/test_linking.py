@@ -8,11 +8,9 @@ import cmath
 
 from .. import ltypes, linking, libs, have_llvm_asm
 from . import support
-from .support import parameterized
 
 import numpy as np
 from llvm.core import *
-from nose.tools import nottest
 
 # ______________________________________________________________________
 
@@ -60,13 +58,13 @@ def make_contexts():
     so = libs.get_mathlib_so()
     so_linker = linking.ExternalLibraryLinker()
     ctx1 = new_ctx(lib=so, linker=so_linker)
-    contexts = [(ctx1,)]
+    contexts = [ctx1]
 
     if have_llvm_asm():
         asm = libs.get_llvm_mathlib()
         asm_linker = linking.LLVMLinker()
         ctx2 = new_ctx(lib=asm, linker=asm_linker)
-        contexts.append((ctx2,))
+        contexts.append(ctx2)
 
     return contexts
 
@@ -84,12 +82,14 @@ def make_func(ctx, defname, callname, ty, nargs=1, byref=False):
 
     return wrap(wrapped, defname)
 
+def pytest_generate_tests(metafunc):
+    if 'ctx' in metafunc.fixturenames:
+        metafunc.parametrize("ctx", make_contexts())
+
 #===------------------------------------------------------------------===
 # Tests
 #===------------------------------------------------------------------===
 
-@nottest
-@parameterized(make_contexts())
 def test_link_real(ctx):
     ctx.mkbyval('mysinf', sinname, ltypes.l_float)
     ctx.mkbyval('mysin',  sinname, ltypes.l_double)
@@ -106,8 +106,6 @@ def test_link_real(ctx):
 def _base_type(ty):
     return ty._type_._fields_[0][1] # Get the base type of a complex *
 
-@nottest
-@parameterized(make_contexts())
 def test_link_complex(ctx):
     ctx.mkbyref('mycsinf', sinname, ltypes.l_complex64)
     ctx.mkbyref('mycsin',  sinname, ltypes.l_complex128)
@@ -137,8 +135,6 @@ def test_link_complex(ctx):
 
 # ______________________________________________________________________
 
-@nottest
-@parameterized(make_contexts())
 def test_link_binary(ctx):
     ty = ltypes.l_complex128
     make_func(ctx, 'mypow', mkname(powname, ty), ty, nargs=2, byref=True)
@@ -158,8 +154,6 @@ def test_link_binary(ctx):
 
 # ______________________________________________________________________
 
-@nottest
-@parameterized(make_contexts())
 def test_link_external(ctx):
     pass
 

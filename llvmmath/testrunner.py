@@ -2,11 +2,6 @@
 
 """
 Run llvmmath tests.
-
-Adapted from dynd-python:
-
-    dynd/__init__.py , May 20 2013
-    git hash: ffefccbabda55bd0af25d0203a2715378acb5c8e
 """
 
 from __future__ import print_function, division, absolute_import
@@ -19,8 +14,7 @@ from llvmmath import __version__
 
 def test(verbosity=1, xunitfile=None, exit=False):
     """
-    Runs the full numba test suite, outputing
-    the results of the tests to  sys.stdout.
+    Runs the full llvmmath test suite.
 
     Parameters
     ----------
@@ -35,6 +29,8 @@ def test(verbosity=1, xunitfile=None, exit=False):
         If True, the function will call sys.exit with an
         error code after the tests are finished.
     """
+    import pytest
+
     print('Running llvmmath unit tests')
     print('===========================')
     print('Python version: %s' % sys.version)
@@ -46,14 +42,18 @@ def test(verbosity=1, xunitfile=None, exit=False):
     print('---------------------------')
 
     sys.stdout.flush()
+    cwd = os.getcwd()
+    try:
+        os.chdir(dirname(dirname(abspath(__file__))))
+        ret = pytest.main([#'--verbosity=%d' % verbosity,
+                           #'--with-xunit',
+                           #'--xunit-file=%s' % xunitfile,
+                           join(dirname(abspath(__file__)), 'tests')])
+    finally:
+        os.chdir(cwd)
 
-    # Use nose to run the tests and produce an XML file
-    import nose
-    return nose.main(argv=['nosetests',
-                    '--verbosity=%d' % verbosity,
-                    '--with-xunit',
-                    '--xunit-file=%s' % xunitfile,
-                    join(dirname(abspath(__file__)), 'tests')],
-                 exit=exit)
+    if exit:
+        raise SystemExit(ret)
+    return ret
 
 test.__test__ = False
