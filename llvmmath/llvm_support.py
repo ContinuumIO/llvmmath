@@ -97,6 +97,11 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
     elif kind == llvm.core.TYPE_VECTOR:
         return map_llvm_to_ctypes(llvm_type.element, py_module) * llvm_type.count
 
+    elif kind == llvm.core.TYPE_FUNCTION:
+        ctype = ctypes.CFUNCTYPE(
+            map_llvm_to_ctypes(llvm_type.return_type),
+            *[map_llvm_to_ctypes(a) for a in llvm_type.args])
+
     else:
         if py_module:
             logger.warn("Unknown type: %s" % llvm_type)
