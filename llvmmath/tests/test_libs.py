@@ -6,8 +6,9 @@ from functools import partial
 import llvm.core as lc
 import numpy as np
 
-from .. import ltypes, libs
-from . import support
+from llvmmath import ltypes, libs
+from llvmmath.tests import support
+from llvmmath.tests.support import test
 
 # ______________________________________________________________________
 
@@ -84,6 +85,7 @@ def run_from_types(library, types):
                 ctypes_func = library.get_ctypes_symbol(name, sig)
                 run(ctypes_func, name, sig, dtype)
 
+@test
 def test_math():
     lib = libs.get_mathlib_so()
     assert not lib.missing, lib.missing
@@ -91,6 +93,7 @@ def test_math():
     run_from_types(lib, ltypes.floating)
     run_from_types(lib, ltypes.complexes)
 
+@test
 def test_abs():
     "Test abs() with negative numbers"
     lib = libs.get_mathlib_so()
@@ -116,5 +119,3 @@ def test_abs():
     result = call(cabsf, x), call(cabs, x), call(cabsl, x)
     result = [r.value for r in result]
     assert np.allclose(result, [abs(x)] * 3), result
-
-test_math()

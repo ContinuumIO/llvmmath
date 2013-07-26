@@ -6,8 +6,9 @@ from collections import namedtuple
 import math
 import cmath
 
-from .. import ltypes, linking, libs, have_llvm_asm
-from . import support
+from llvmmath import ltypes, linking, libs, have_llvm_asm
+from llvmmath.tests import support
+from llvmmath.tests.support import parametrize
 
 import numpy as np
 from llvm.core import *
@@ -82,14 +83,11 @@ def make_func(ctx, defname, callname, ty, nargs=1, byref=False):
 
     return wrap(wrapped, defname)
 
-def pytest_generate_tests(metafunc):
-    if 'ctx' in metafunc.fixturenames:
-        metafunc.parametrize("ctx", make_contexts())
-
 #===------------------------------------------------------------------===
 # Tests
 #===------------------------------------------------------------------===
 
+@parametrize(ctx=make_contexts())
 def test_link_real(ctx):
     ctx.mkbyval('mysinf', sinname, ltypes.l_float)
     ctx.mkbyval('mysin',  sinname, ltypes.l_double)
@@ -106,6 +104,7 @@ def test_link_real(ctx):
 def _base_type(ty):
     return ty._type_._fields_[0][1] # Get the base type of a complex *
 
+@parametrize(ctx=make_contexts())
 def test_link_complex(ctx):
     ctx.mkbyref('mycsinf', sinname, ltypes.l_complex64)
     ctx.mkbyref('mycsin',  sinname, ltypes.l_complex128)
@@ -135,6 +134,7 @@ def test_link_complex(ctx):
 
 # ______________________________________________________________________
 
+@parametrize(ctx=make_contexts())
 def test_link_binary(ctx):
     ty = ltypes.l_complex128
     make_func(ctx, 'mypow', mkname(powname, ty), ty, nargs=2, byref=True)
@@ -154,6 +154,7 @@ def test_link_binary(ctx):
 
 # ______________________________________________________________________
 
+@parametrize(ctx=make_contexts())
 def test_link_external(ctx):
     pass
 

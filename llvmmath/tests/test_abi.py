@@ -3,16 +3,19 @@ from __future__ import print_function, division, absolute_import
 
 from functools import partial
 
-from .. import ltypes
-from . import support
+from llvmmath import ltypes
+from llvmmath.tests import support
+from llvmmath.tests.support import test
 
 from llvm.core import *
 
+# @test
 # def test_complex_abi_byval():
 #     run_byval(ltypes.l_complex64)  # This one always breaks
 #     run_byval(ltypes.l_complex128) # This one breaks on some platforms
 #     run_byval(ltypes.l_complex256) # This one always breaks
 
+@test
 def test_complex_abi_byref():
     run_byref(ltypes.l_complex64)
     run_byref(ltypes.l_complex128)
@@ -55,5 +58,3 @@ def make_complex_func(mod, ty, name):
     bb = f.append_basic_block('entry')
     b = Builder.new(bb)
     return f, b
-
-test_complex_abi_byref()

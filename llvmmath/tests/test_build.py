@@ -9,15 +9,16 @@ import math
 import tempfile
 import shutil
 
-from .. import llvm_support, build, have_llvm_asm, have_clang
-from . import support
+from llvmmath import llvm_support, build, have_llvm_asm, have_clang
+from llvmmath.tests.support import test, skip_if, make_llvm_context
 
 writable = lambda dirname: os.access(dirname, os.W_OK)
 
 # ______________________________________________________________________
 
-@support.skip_if(not writable(dirname(dirname(abspath(__file__)))))
-@support.skip_if(not have_clang())
+@test
+@skip_if(not writable(dirname(dirname(abspath(__file__)))))
+@skip_if(not have_clang())
 def test_build_llvm():
     "Test building llvm and getting and using the resulting llvm module"
     tempdir = tempfile.mkdtemp()
@@ -28,16 +29,18 @@ def test_build_llvm():
                                 output_dir=tempdir)
         build.build_targets(config=config)
         assert exists(asmfile)
-        test_get_llvm_lib(asmfile)
+        get_llvm_lib(asmfile)
     finally:
         shutil.rmtree(tempdir)
 
+print(test_build_llvm, vars(test_build_llvm))
+#
 # ______________________________________________________________________
 
-@support.skip_if(not have_llvm_asm())
-def test_get_llvm_lib(asmfile=None):
+@skip_if(not have_llvm_asm())
+def get_llvm_lib(asmfile=None):
     "Test getting the llvm lib from a clean environment"
-    lctx = support.make_llvm_context()
+    lctx = make_llvm_context()
     kwds = { 'asmfile': asmfile } if asmfile else {}
     lmod = build.load_llvm_asm(**kwds)
     mod = types.ModuleType('llvmmod')
@@ -46,5 +49,7 @@ def test_get_llvm_lib(asmfile=None):
     result = mod.npy_sin(ctypes.c_double(10.0))
     expect = math.sin(10.0)
     assert result == expect, (result, expect)
+
+test_get_llvm_lib = test(get_llvm_lib)
 
 # ______________________________________________________________________

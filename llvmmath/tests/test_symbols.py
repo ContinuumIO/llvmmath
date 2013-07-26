@@ -3,8 +3,9 @@ from __future__ import print_function, division, absolute_import
 
 from io import StringIO
 
-from .. import parsesyms, symbols, libs
-from .. import ltypes as l
+from llvmmath import parsesyms, symbols, libs
+from llvmmath import ltypes as l
+from llvmmath.tests.support import test
 
 testfuncs = u"""
 complex pow(complex, int)
@@ -17,6 +18,7 @@ class MockLib(symbols.MathLib):
     def get_libm_symbol(self, cname):
         return 1
 
+@test
 def test_duplicates():
     syms = parsesyms.parse_symbols(StringIO(testfuncs))
     lib = symbols.get_symbols(libs.Library(None, None), MockLib(None), syms)

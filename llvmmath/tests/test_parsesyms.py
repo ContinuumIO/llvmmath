@@ -3,8 +3,9 @@ from __future__ import print_function, division, absolute_import
 
 from io import StringIO
 
-from .. import parsesyms
-from ..parsesyms import Symbol
+from llvmmath import parsesyms
+from llvmmath.parsesyms import Symbol
+from llvmmath.tests.support import test
 
 testfuncs = u"""
 float sin(float)
@@ -23,6 +24,7 @@ float sin(float) # comment4
 
 symdict = lambda syms: dict((sym.name, sym) for sym in syms)
 
+@test
 def test_parsefuncs():
     syms = symdict(parsesyms.parse_symbols(StringIO(testfuncs)))
     assert syms['sin'].name == 'sin'
@@ -31,6 +33,7 @@ def test_parsefuncs():
 
     assert syms['pow'].argtypes == ('complex', 'int')
 
+@test
 def test_duplicates():
     syms = parsesyms.parse_symbols(StringIO(testfuncs))
     collected = []
@@ -46,6 +49,7 @@ def test_duplicates():
 
     assert set(collected) == expected
 
+@test
 def test_comments():
     syms = symdict(parsesyms.parse_symbols(StringIO(testcomments)))
     assert len(syms) == 1

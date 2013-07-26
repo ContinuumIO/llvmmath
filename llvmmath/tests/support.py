@@ -10,6 +10,7 @@ import types
 import ctypes
 import unittest
 import functools
+import itertools
 import collections
 
 from .. import llvm_support
@@ -106,3 +107,57 @@ def skip_if(cond, msg="Skipping"):
             return f(*args, **kwargs)
         return wrapper
     return dec
+
+
+def test(f):
+    class Test(unittest.TestCase):
+        pass
+
+    @functools.wraps(f)
+    def test_something(self):
+        f()
+
+    setattr(Test, f.__name__, test_something)
+    Test.__name__ = f.__name__.title().replace("_", "")
+    return Test
+
+def parametrize(**named_parameters):
+    """
+        @parametrize(x=['foo', 'bar'], y=['baz', 'quux'])
+        def test_func(x, y):
+            print x, y # prints all combinations
+
+    Generates a unittest TestCase in the function's global scope named
+    'test_func_testcase' with parametrized test methods.
+
+    ':return: The original function
+    """
+    def decorator(func):
+        class TestCase(unittest.TestCase):
+            pass
+
+        TestCase.__name__ = func.__name__
+        names = named_parameters.keys()
+        values = itertools.product(*named_parameters.values())
+
+        for i, parameter in enumerate(values):
+            name = 'test_%s_%d' % (func.__name__, i)
+
+            if names:
+                def testfunc(self, parameter=parameter):
+                    return func(**dict(zip(names, parameter)))
+            else:
+                def testfunc(self, parameter=parameter):
+                    return func(parameter)
+
+            testfunc.__name__ = name
+            if func.__doc__:
+                testfunc.__doc__ = func.__doc__.replace(func.__name__, name)
+
+            setattr(TestCase, name, testfunc)
+
+
+        func.__globals__[func.__name__ + '_testcase'] = TestCase
+        return func
+
+    return decorator
