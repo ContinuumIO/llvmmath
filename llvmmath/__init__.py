@@ -4,8 +4,13 @@ from __future__ import print_function, division, absolute_import
 __version__ = '0.1'
 
 from os.path import dirname, abspath
-import unittest
+import sys
 import logging
+
+if sys.version_info[:2] < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
