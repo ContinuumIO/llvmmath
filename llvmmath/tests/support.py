@@ -6,6 +6,7 @@ Some test helpers.
 
 from __future__ import print_function, division, absolute_import
 
+import sys
 import types
 import ctypes
 import unittest
@@ -19,7 +20,6 @@ from .. complex_support import have_lfunc, create_byref_wrapper, print_complex
 import llvm.core as lc
 import llvm.passes as lp
 import llvm.ee as le
-from nose.plugins.skip import SkipTest
 
 LLVMContext = collections.namedtuple("LLVMContext", "engine module pm")
 
@@ -102,9 +102,12 @@ def skip_if(cond, msg="Skipping"):
     def dec(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            if cond:
-                raise SkipTest(msg)
-            return f(*args, **kwargs)
+            if cond and sys.version_info[:2] < (2, 7):
+                print("Skipping test:", msg)
+            elif cond:
+                raise unittest.SkipTest(msg)
+            else:
+                return f(*args, **kwargs)
         return wrapper
     return dec
 
