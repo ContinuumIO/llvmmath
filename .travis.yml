@@ -25,7 +25,7 @@ install:
   - pip -q install -r requirements.txt --use-mirrors
   - python setup.py install -q >/dev/null
 
-script: cd ~; python -c "import llvmmath; llvmmath.test(verbosity=2, exit=True)"
+script: cd ~; python -c "import llvmmath; llvmmath.test()"
 
 notifications:
   email: false
