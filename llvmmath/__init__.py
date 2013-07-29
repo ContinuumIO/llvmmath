@@ -24,7 +24,7 @@ from .libs import get_libm, get_openlibm
 # ______________________________________________________________________
 # llvmmath.test()
 
-root = dirname(dirname(abspath(__file__)))
+root = dirname(abspath(__file__))
 pattern = "test_*.py"
 
 def test(root=root, pattern=pattern):
