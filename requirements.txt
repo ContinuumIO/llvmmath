@@ -1,3 +1,2 @@
 numpy>=1.6
 llvmpy
-unittest2
