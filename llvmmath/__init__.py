@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import
 
-__version__ = '0.1'
+__version__ = '0.1.1'
 
 from os.path import dirname, abspath
 import logging
