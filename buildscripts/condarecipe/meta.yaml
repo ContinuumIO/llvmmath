@@ -1,0 +1,23 @@
+package:
+  name: llvmmath
+  version: master
+
+source:
+  git_url: git@github.com:ContinuumIO/llvmmath.git
+  #git_tag: 0.1.1
+
+requirements:
+  build:
+    - python
+    - llvmpy
+    - numpy
+  run:
+    - python
+    - llvmpy
+    - numpy
+
+test:
+  requires:
+    - nose
+  imports:
+    - llvmmath

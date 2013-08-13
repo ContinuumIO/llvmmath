@@ -1,0 +1,3 @@
+import llvmmath
+
+llvmmath.test()
