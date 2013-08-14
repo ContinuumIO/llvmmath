@@ -1,6 +1,6 @@
 package:
   name: llvmmath
-  version: master
+  version: 99.9.9
 
 source:
   git_url: git@github.com:ContinuumIO/llvmmath.git
