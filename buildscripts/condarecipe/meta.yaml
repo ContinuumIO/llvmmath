@@ -11,7 +11,7 @@ requirements:
     - python
     - llvmpy
     - numpy
-    - chrpath       [linux]
+    #- chrpath       [linux]
   run:
     - python
     - llvmpy
