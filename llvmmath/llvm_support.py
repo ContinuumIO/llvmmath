@@ -31,6 +31,8 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
     '''
     kind = llvm_type.kind
     if kind == llvm.core.TYPE_INTEGER:
+        if llvm_type.width < 8:
+            return ctypes.c_int8
         ctype = getattr(ctypes,"c_int"+str(llvm_type.width))
 
     elif kind in (llvm.core.TYPE_X86_FP80,
