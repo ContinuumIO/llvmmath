@@ -1,3 +1,4 @@
+import sys
 import llvmmath
 
-llvmmath.test()
+sys.exit(llvmmath.test())
