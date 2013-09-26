@@ -149,6 +149,7 @@ def wrap_llvm_module(llvm_module, engine, py_module):
     '''
     functions = [func for func in llvm_module.functions
                  if not func.name.startswith("_")
+                 and not func.name.startswith("Py")
                  and not func.is_declaration
                  and func.linkage == llvm.core.LINKAGE_EXTERNAL]
     for func in functions:
