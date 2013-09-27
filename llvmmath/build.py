@@ -41,7 +41,14 @@ includes = ['-I' + abspath(dir) for dir in incdirs]
 def build_llvm(config):
     "Compile math library to bitcode with clang"
     outfile = join(config.output_dir, 'mathcode.s')
-    check_call([config.clang, '-O0', '-c', 'mathcode.c',
+    # use the most generic target triple
+    if tuple.__itemsize__ == 8:
+        target = 'x86_64'
+    else:
+        target = 'i386'
+    # Disable optimization to leave more information to the client.
+    # The client can then specialize to the specific hardware just-in-time.
+    check_call([config.clang, '-O0', '-target', target, '-c', 'mathcode.c',
                 '-S', '-emit-llvm', '-o', outfile] + includes,
                cwd=mathcode)
 
