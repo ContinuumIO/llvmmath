@@ -41,7 +41,7 @@ includes = ['-I' + abspath(dir) for dir in incdirs]
 def build_llvm(config):
     "Compile math library to bitcode with clang"
     outfile = join(config.output_dir, 'mathcode.s')
-    check_call([config.clang, '-O3', '-march=native', '-c', 'mathcode.c',
+    check_call([config.clang, '-O0', '-c', 'mathcode.c',
                 '-S', '-emit-llvm', '-o', outfile] + includes,
                cwd=mathcode)
 
