@@ -42,10 +42,20 @@ def build_llvm(config):
     "Compile math library to bitcode with clang"
     outfile = join(config.output_dir, 'mathcode.s')
     # use the most generic target triple
+    ## arch
     if tuple.__itemsize__ == 8:
         target = 'x86_64'
     else:
         target = 'i386'
+    ## OS
+    if sys.platform.startswith('win32'):
+        target += '-win32'
+    elif sys.platform.startswith('darwin'):
+        target += '-macosx'
+    elif sys.platform.startswith('linux'):
+        target += '-linux'
+    else: # unknown platform, maybe it does not need the OS info
+        pass
     # Disable optimization to leave more information to the client.
     # The client can then specialize to the specific hardware just-in-time.
     check_call([config.clang, '-O0', '-target', target, '-c', 'mathcode.c',
