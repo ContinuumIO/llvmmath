@@ -17,7 +17,8 @@ from llvm.core import *
 # Required symbols
 
 symbolfile = join(dirname(abspath(__file__)), 'RequiredSymbols.txt')
-required_symbols = parsesyms.parse_symbols(open(symbolfile))
+with open(symbolfile) as fin:
+    required_symbols = parsesyms.parse_symbols(fin)
 
 typemap = {
     'int': ltypes.integral,

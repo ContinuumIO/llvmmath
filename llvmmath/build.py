@@ -116,7 +116,9 @@ def load_llvm_asm(asmfile=asmfile):
     "Load the math library as an LLVM module"
     if not exists(asmfile):
         build(mkconfig(default_config, targets=[build_llvm]))
-    return llvm.core.Module.from_assembly(open(asmfile))
+    with open(asmfile) as fin:
+        mod = llvm.core.Module.from_assembly(fin)
+    return mod
 
 if __name__ == '__main__':
     build()
