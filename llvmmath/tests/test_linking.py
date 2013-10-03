@@ -49,6 +49,7 @@ class _Ctx(namedtuple('Ctx', "engine module pm lib linker, replacements")):
         linking.link_llvm_math_intrinsics(
             engine, mod, lib, linker, replacements)
         mod.verify()
+        pm.run(mod)
 
 def new_ctx(lib, linker):
     engine, mod, pm = support.make_llvm_context()
