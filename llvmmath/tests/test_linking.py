@@ -49,6 +49,13 @@ class _Ctx(namedtuple('Ctx', "engine module pm lib linker, replacements")):
         linking.link_llvm_math_intrinsics(
             engine, mod, lib, linker, replacements)
         mod.verify()
+
+        # Using the module optimizer to inline all functions remove a segfault
+        # condition on 32-bit linux; thus, this is supporting the my guess
+        # that bad ABI use is causing a stack corruption.
+        # Eliminating the internal function call has successfully remove
+        # the segfault.
+        # TODO: replace all complex wrapping code
         pm.run(mod)
 
 def new_ctx(lib, linker):
