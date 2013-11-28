@@ -215,7 +215,13 @@ def link_llvm_math_intrinsics(engine, module, library, linker, replacements):
 
             sig = ltypes.Signature(restype, argtypes)
             linkarg = library.get_symbol(name, sig)
-            assert linkarg, (name, sig, library.symbols[name])
+
+            # See whether our symbol is available
+            if linkarg is None:
+                raise LookupError(
+                    "Symbol %s with signature %s not available, "
+                    "we only have %s" % (name, sig, library.symbols[name]))
+
             linker.link(engine, module, library, lfunc, linkarg)
             del lfunc # this is dead now, don't touch
 
