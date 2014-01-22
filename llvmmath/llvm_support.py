@@ -96,6 +96,9 @@ def map_llvm_to_ctypes(llvm_type, py_module=None):
         if py_module:
             setattr(py_module, struct_name, ctype)
 
+    elif kind == llvm.core.TYPE_ARRAY:
+        return map_llvm_to_ctypes(llvm_type.element, py_module) * llvm_type.count
+
     elif kind == llvm.core.TYPE_VECTOR:
         return map_llvm_to_ctypes(llvm_type.element, py_module) * llvm_type.count
 
