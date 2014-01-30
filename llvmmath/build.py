@@ -13,7 +13,7 @@ from distutils import sysconfig
 from functools import partial
 from collections import namedtuple
 from os.path import join, dirname, abspath, exists
-from subprocess import call, check_call, PIPE
+from subprocess import call, check_call
 
 from .utils import cached
 from .generator import generate_config
@@ -125,7 +125,9 @@ def have_llvm_asm():
 def have_clang():
     "See whether we have clang installed and working"
     try:
-        return call(['clang', '--help'], stdout=PIPE) == 0
+        # http://stackoverflow.com/questions/699325
+        with open(os.devnull, 'w') as devnull:
+            return call(['clang', '--help'], stdout=devnull, stderr=devnull) == 0
     except EnvironmentError:
         return False
 
