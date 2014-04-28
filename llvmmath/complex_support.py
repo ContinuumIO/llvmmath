@@ -92,11 +92,11 @@ def create_val2ref_wrapper(wrapped, name, func_ty):
     bb = lfunc.append_basic_block('entry')
     b = lc.Builder.new(bb)
 
-    ret = b.alloca(func_ty.return_type, 'result')
+    ret = b.alloca(func_ty.return_type, None, 'result')
 
     newargs = []
     for arg, dst_argty in zip(lfunc.args, dst_argtys):
-        dstarg = b.alloca(arg.type, 'arg')
+        dstarg = b.alloca(arg.type, None, 'arg')
         b.store(arg, dstarg)
         newargs.append(b.bitcast(dstarg, dst_argty))
 
